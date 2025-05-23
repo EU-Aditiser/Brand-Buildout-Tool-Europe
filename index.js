@@ -11,6 +11,7 @@ updateButtonState(BUTTON_STATE);
 
 let ACCOUNTS = [];
 let accessToken = null;
+let tokenClient;
 
 
 /**
@@ -217,6 +218,16 @@ window.onload = function() {
   );
   google.accounts.id.prompt();
   signoutButton.style.display = 'none';
+
+  // Initialize the token client for OAuth2
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive',
+    callback: (tokenResponse) => {
+      accessToken = tokenResponse.access_token;
+      gapi.load('client', initGapiClient);
+    },
+  });
 };
 
 signoutButton.onclick = function() {
@@ -224,4 +235,17 @@ signoutButton.onclick = function() {
   accessToken = null;
   document.getElementById('g_id_signin').style.display = 'block';
   signoutButton.style.display = 'none';
+};
+
+// Call this function when you want to request Sheets/Drive access
+function requestSheetsAccess() {
+  tokenClient.requestAccessToken();
+}
+
+accountBuildoutButton.onclick = async function() {
+  if (!accessToken) {
+    requestSheetsAccess();
+    return;
+  }
+  handleAccountBuildoutClick();
 };
