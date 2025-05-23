@@ -66,6 +66,10 @@ function readManagerSelectData() {
  * Create Account buildouts on Click 
  */
 async function handleAccountBuildoutClick(e) {
+  // Always set the access token before any Sheets API call
+  if (accessToken) {
+    gapi.client.setToken({ access_token: accessToken });
+  }
   switch(BUTTON_STATE) {
     case "GET_MANAGER_DATA":
       updateButtonState("")
@@ -199,7 +203,7 @@ function initGapiClient() {
     apiKey: API_KEY,
     discoveryDocs: DISCOVERY_DOCS,
   }).then(function () {
-    // Now you can use gapi.client.sheets
+    gapi.client.setToken({ access_token: accessToken });
   }, function(error) {
     console.error("Google API client init error:", error);
   });
@@ -225,6 +229,7 @@ window.onload = function() {
     scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive',
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;
+      gapi.client.setToken({ access_token: accessToken });
       gapi.load('client', initGapiClient);
     },
   });
@@ -247,5 +252,15 @@ accountBuildoutButton.onclick = async function() {
     requestSheetsAccess();
     return;
   }
-  handleAccountBuildoutClick();
+  try {
+    await handleAccountBuildoutClick();
+  } catch (e) {
+    if (e.status === 403 || (e.result && e.result.error && e.result.error.code === 403)) {
+      // If a 403 (PERMISSION_DENIED) is returned, re-request the token and re-try (after a small delay)
+      requestSheetsAccess();
+      setTimeout(() => { if (accessToken) handleAccountBuildoutClick(); }, 500);
+    } else {
+      console.error("Error in handleAccountBuildoutClick:", e);
+    }
+  }
 };
