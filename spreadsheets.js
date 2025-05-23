@@ -290,13 +290,15 @@ function getThirdLevelDomainFromSheet(sheet, account) {
 }
 
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
-  // Expanded header row for Headline 1-15 and their positions
+  // Header row with exact columns as specified
   const rawHeaderRow = [
-    "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", "Description Line 1", "Description Line 2",
+    "Campaign", "Account", "Language", "Campaign Type", "Labels", "Ad type", "Status", 
+    "Description Line 1", "Description Line 2",
     "Headline 1", "Headline 1 position",
-    ...Array.from({length: 14}, (_, i) => `Headline ${i+2}`),
-    "Path 1",
-    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4", "Max CPC", "Flexible Reach"
+    "Headline 2", "Headline 3", "Headline 4", "Headline 5", "Headline 6", "Headline 7", 
+    "Headline 8", "Headline 9", "Headline 10", "Headline 11", "Headline 12", "Headline 13", 
+    "Headline 14", "Headline 15",
+    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
   ];
   let masterSpreadsheet = createSpreadSheet(account+ " Buildout", rawHeaderRow);
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
@@ -362,11 +364,11 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description3 = !isCellEmpty(adCopyRowData[i].values[42]) ? adCopyRowData[i].values[42].userEnteredValue.stringValue : "";
           const description4 = !isCellEmpty(adCopyRowData[i].values[43]) ? adCopyRowData[i].values[43].userEnteredValue.stringValue : "";
           const adRowValues = [
-            campaign, adGroup, "", "", finalURL, labels, adType, status, descriptionLine1, descriptionLine2,
+            campaign, account, language, campaign, labels, adType, status,
+            descriptionLine1, descriptionLine2,
             headlines[0], headline1Position, // Headline 1 and its position
-            ...headlines.slice(1),           // Headline 2–15
-            path1,
-            description1, description1Position, description2, description3, description4, "", ""
+            ...headlines.slice(1), // Headline 2-15
+            description1, description1Position, description2, description3, description4
           ];
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
@@ -424,15 +426,12 @@ function isCellEmpty(cell) {
 
 /**potentially hazasrdous */
 function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, campaignType) {
-  // Fill with empty strings for new columns
-  const flexibleReach = campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : "Genders;Ages;Parental status;Household incomes";
   return createRowData([
-    campaign, adGroup, "", "", "", "", "", "", "", "", // up to Description Line 2
+    campaign, "", "", campaignType, "", "", campaignStatus, "", "", // Campaign through Status
+    "", "", // Description Line 1, 2
     ...Array(15).fill(""), // Headline 1-15
-    ...Array(15).fill(""), // Headline 1-15 positions
-    "", // Path 1
-    "", "", "", "", "", // Description 1, Description 1 position, Description 2, 3, 4
-    "0.5", flexibleReach
+    "", // Headline 1 position
+    ...Array(5).fill("") // Description 1-4 and Description 1 position
   ]);
 }
 

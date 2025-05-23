@@ -1,7 +1,6 @@
 /** 
  * Initialize Buttons 
  * */
-const signoutButton = document.getElementById('signout_button');
 const createBrandBuildoutTemplateButton = document.getElementById('create_brand_buildout_template_button');
 const accountBuildoutButton = document.getElementById('create_account_buildout_button');
 
@@ -202,7 +201,6 @@ function readTextFile(file)
 function handleCredentialResponse(response) {
   // Only handle UI, do not set accessToken here
   document.getElementById('g_id_signin').style.display = 'none';
-  signoutButton.style.display = 'block';
 }
 
 function initGapiClient() {
@@ -228,7 +226,6 @@ window.onload = function() {
     { theme: 'outline', size: 'large' }
   );
   google.accounts.id.prompt();
-  signoutButton.style.display = 'none';
 
   // Initialize the token client for OAuth2
   tokenClient = google.accounts.oauth2.initTokenClient({
@@ -240,13 +237,6 @@ window.onload = function() {
       gapi.load('client', initGapiClient);
     },
   });
-};
-
-signoutButton.onclick = function() {
-  google.accounts.id.disableAutoSelect();
-  accessToken = null;
-  document.getElementById('g_id_signin').style.display = 'block';
-  signoutButton.style.display = 'none';
 };
 
 // Call this function when you want to request Sheets/Drive access
