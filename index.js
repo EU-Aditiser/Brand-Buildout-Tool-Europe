@@ -250,6 +250,21 @@ accountBuildoutButton.onclick = async function() {
     requestSheetsAccess();
     return;
   }
+  // Ensure gapi.client is loaded and initialized before setting the token
+  if (!gapi.client || !gapi.client.setToken) {
+    gapi.load('client', () => {
+      gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: DISCOVERY_DOCS,
+      }).then(function () {
+        gapi.client.setToken({ access_token: accessToken });
+        handleAccountBuildoutClick();
+      }, function(error) {
+        console.error("Google API client init error:", error);
+      });
+    });
+    return;
+  }
   gapi.client.setToken({ access_token: accessToken });
   try {
     await handleAccountBuildoutClick();
