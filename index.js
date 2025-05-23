@@ -11,6 +11,7 @@ let MANAGER = "";
 updateButtonState(BUTTON_STATE);
 
 let ACCOUNTS = [];
+let accessToken = null;
 
 /**
  *  On load, called to load the auth2 library and API client library.
@@ -254,3 +255,45 @@ function readTextFile(file)
     rawFile.send(null);
     return rawFile.responseText;
 }
+
+// GIS Authentication Migration
+function handleCredentialResponse(response) {
+  accessToken = response.credential;
+  document.getElementById('g_id_signin').style.display = 'none';
+  signoutButton.style.display = 'block';
+  // Now initialize gapi client for Sheets API
+  gapi.load('client', initGapiClient);
+}
+
+function initGapiClient() {
+  gapi.client.init({
+    apiKey: API_KEY,
+    discoveryDocs: DISCOVERY_DOCS,
+  }).then(function () {
+    // Now you can use gapi.client.sheets
+  }, function(error) {
+    console.error("Google API client init error:", error);
+  });
+}
+
+window.onload = function() {
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: handleCredentialResponse,
+    ux_mode: 'popup',
+    auto_select: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g_id_signin'),
+    { theme: 'outline', size: 'large' }
+  );
+  google.accounts.id.prompt();
+  signoutButton.style.display = 'none';
+};
+
+signoutButton.onclick = function() {
+  google.accounts.id.disableAutoSelect();
+  accessToken = null;
+  document.getElementById('g_id_signin').style.display = 'block';
+  signoutButton.style.display = 'none';
+};

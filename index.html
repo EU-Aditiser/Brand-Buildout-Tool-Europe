@@ -17,6 +17,7 @@
       <!--Add buttons to initiate auth sequence and sign out-->
       <button type="button" class="btn btn-primary"  id="authorize_button" style="display: none;">Authorize</button>
       <button type="button" class="btn btn-primary" id="signout_button" style="display: none;">Sign Out</button><br>
+      <div id="g_id_signin"></div>
 
       <h3>Brand Buildout Quickstart Template Tool</h3>
       <div class="input-group">
@@ -75,5 +76,6 @@
       onload="this.onload=function(){};handleClientLoad()"
       onreadystatechange="if (this.readyState === 'complete') this.onload()">
     </script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </body>
 </html>
