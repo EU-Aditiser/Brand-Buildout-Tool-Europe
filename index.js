@@ -191,11 +191,9 @@ function readTextFile(file)
 
 // GIS Authentication Migration
 function handleCredentialResponse(response) {
-  accessToken = response.credential;
+  // Only handle UI, do not set accessToken here
   document.getElementById('g_id_signin').style.display = 'none';
   signoutButton.style.display = 'block';
-  // Now initialize gapi client for Sheets API
-  gapi.load('client', initGapiClient);
 }
 
 function initGapiClient() {
@@ -252,6 +250,7 @@ accountBuildoutButton.onclick = async function() {
     requestSheetsAccess();
     return;
   }
+  gapi.client.setToken({ access_token: accessToken });
   try {
     await handleAccountBuildoutClick();
   } catch (e) {
