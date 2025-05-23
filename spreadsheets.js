@@ -358,11 +358,12 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             headlines.push(headline);
           }
           const path1 = path;
-          const description1 = !isCellEmpty(adCopyRowData[i].values[39]) ? adCopyRowData[i].values[39].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[40]) ? (adCopyRowData[i].values[40].userEnteredValue.stringValue || adCopyRowData[i].values[40].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[41]) ? adCopyRowData[i].values[41].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[42]) ? adCopyRowData[i].values[42].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[43]) ? adCopyRowData[i].values[43].userEnteredValue.stringValue : "";
+          // Update indices for description values to match their actual positions
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
           const adRowValues = [
             campaign, account, language, campaign, labels, adType, status,
             descriptionLine1, descriptionLine2,
