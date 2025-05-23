@@ -155,8 +155,16 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
     const newSpreadsheet = await createNewDocument(spreadsheets[i]);
     console.log(newSpreadsheet)
     const url = newSpreadsheet.spreadsheetUrl;
-    window.open(url, '_blank');
+    // Try to open the new sheet and check for popup block
+    const popup = window.open(url, '_blank');
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      alert('Popup was blocked! Please allow popups for this site to see the created sheet.');
+    } else {
+      // Optionally focus the popup
+      popup.focus();
+    }
   }
+  alert('Spreadsheet(s) created successfully!');
 
   location.reload()
 }
