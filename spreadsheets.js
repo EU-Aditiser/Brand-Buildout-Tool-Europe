@@ -120,19 +120,18 @@ function rowIsEmpty(row) {
 function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
   const rows = sheet.data[0].rowData;
+  console.log("First row structure:", rows[0]?.values?.map((v, i) => `${i}: ${v?.userEnteredValue?.stringValue || ''}`));
+  
   for(let i = 0; i < rows.length; i++) {
     if(!rowIsEmpty(rows[i]) && rows[i].values[1].hasOwnProperty('userEnteredValue')) {
       const adAccount = rows[i].values[1].userEnteredValue.stringValue;
       const adLanguage = rows[i].values[2].userEnteredValue.stringValue;
       const adType = rows[i].values[3].userEnteredValue.stringValue;
-      console.log(adAccount, adLanguage, adType)
       if(adAccount === account && adLanguage === language && adType === type)  {
         adCopyRows.push(rows[i])
       }
     } 
   }
-  console.log(adCopyRows)
-
   return adCopyRows;
 }
 
@@ -358,12 +357,27 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             headlines.push(headline);
           }
           const path1 = path;
-          // Update indices for description values to match their actual positions
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          // Log the row data to see where description values are
+          console.log("Ad copy row values:", adCopyRowData[i].values.map((v, idx) => 
+            `${idx}: ${v?.userEnteredValue?.stringValue || v?.userEnteredValue?.numberValue || ''}`
+          ));
+          
+          // Update indices for description values based on actual data structure
+          const description1 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[16]) ? (adCopyRowData[i].values[16].userEnteredValue.stringValue || adCopyRowData[i].values[16].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[17]) ? adCopyRowData[i].values[17].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[18]) ? adCopyRowData[i].values[18].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[19]) ? adCopyRowData[i].values[19].userEnteredValue.stringValue : "";
+          
+          // Log the extracted description values
+          console.log("Extracted description values:", {
+            description1,
+            description1Position,
+            description2,
+            description3,
+            description4
+          });
+          
           const adRowValues = [
             campaign, account, language, campaign, labels, adType, status,
             descriptionLine1, descriptionLine2,
