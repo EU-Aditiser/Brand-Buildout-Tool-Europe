@@ -361,7 +361,9 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description4 = !isCellEmpty(adCopyRowData[i].values[43]) ? adCopyRowData[i].values[43].userEnteredValue.stringValue : "";
           const adRowValues = [
             campaign, adGroup, "", "", finalURL, labels, adType, status, descriptionLine1, descriptionLine2,
-            ...headlines, headline1Position, path1,
+            headlines[0], headline1Position, // Headline 1 and its position
+            ...headlines.slice(1),           // Headline 2–15
+            path1,
             description1, description1Position, description2, description3, description4, "", ""
           ];
           const adRow = createRowData(adRowValues);
