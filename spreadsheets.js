@@ -166,7 +166,9 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
   }
   alert('Spreadsheet(s) created successfully!');
 
-  location.reload()
+  if (typeof resetUIState === 'function') {
+    resetUIState();
+  }
 }
 
 function getUrlDataSheet(accountDataSpreadsheet) {

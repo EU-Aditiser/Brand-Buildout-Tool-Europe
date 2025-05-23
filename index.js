@@ -287,3 +287,14 @@ accountBuildoutButton.onclick = async function() {
     }
   }
 };
+
+// Add a global function to reset UI state after spreadsheet creation
+function resetUIState() {
+  // Clear input fields
+  document.getElementById("master_brand_buildout_spreadsheet").value = "";
+  document.getElementById("account_data_spreadsheet").value = "";
+  document.getElementById("accounts_form").innerHTML = "";
+  BUTTON_STATE = "GET_MANAGER_DATA";
+  updateButtonState(BUTTON_STATE);
+  ACCOUNTS = [];
+}
