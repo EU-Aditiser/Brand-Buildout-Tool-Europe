@@ -117,7 +117,16 @@ async function handleAccountBuildoutClick(e) {
       const brandBuildoutSpreadsheet = await getSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
       const accountDataSpreadsheetCreate = await getSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
       
-      await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
+      try {
+        const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
+        if (newSheetUrl) {
+          window.open(newSheetUrl, '_blank');
+        }
+      } catch (e) {
+        console.error("Error in processRequest:", e);
+        alert("An error occurred: " + (e.message || e));
+        // Optionally: signoutButton.onclick();
+      }
 
       BUTTON_STATE = "GET_DATA";
       updateButtonState(BUTTON_STATE);
