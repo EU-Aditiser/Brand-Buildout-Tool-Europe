@@ -1,31 +1,7 @@
-June 2022 Patch Notes
-
-Version 0.2.1 (Latest) (13/6/22)
--Improves speed of manager and account select drastically, moderate improvements to speed of spreadsheet generation.
--Removes support for account style spreadsheets
--Removes default spreadsheet URLS
--Adds warning for empty URL inputs
+May 2023 Patch Notes
 
 
-Version 0.2.0 (Latest) (8/6/22)
--Adds support for two new spreadsheet styles, Account style and Manager style
-    - /!\ WARNING /!\ To make your old datasheets compatible with this version, please rename "Ad Copy" to 
-    whatever the name of your account is. For example "Russia".
-
-May 2022 Patch Notes
-
-Version 0.1.3 (31/5/22) 
--Adds support for accounts like Japan that need Headline 1 Position, and Description 4
-    -/!\ WARNING /!\ You must add Headline 1 Position and Description 4 to all of your account datasheets,
-    even if they are not neccessary for that account. Otherwise the software will not work. Please reference the 
-    tutorial file for how to do this.
--Adds patch notes reference on website
--Adds visual updates
-
-Version 0.1.2 (30/5/22)
--Adds support for accounts like China that need Headline 6 and Headline 7
-    -/!\ WARNING /!\ You must add Headline 6 and Headline 7 to all of your account datasheets,
-    even if they are not neccessary for that account. Otherwise the software will not work. Please reference the 
-    tutorial file for how to do this.
-    -Adds spinning loader so you can tell if the program is actually doing something
--Appends (Language) to the end of campaign title no matter how many languages are included in your account.
+- The spreadsheet header row now includes Headline 1–15 and their positions.
+- Ad row construction now extracts and inserts up to 15 headlines and their positions.
+- The field length check now validates all 15 headlines for the 40-character limit.
+- The ad group row data function now matches the new column count.

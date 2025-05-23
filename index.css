@@ -3,6 +3,10 @@
     Secondary Yellow: #ffcb06
 */
 
+body {
+    cursor: default;
+}
+
 input, label {
     display:block;
 }
@@ -30,7 +34,9 @@ input, label {
 }
 
 .btn-primary {
-    background-color: #104a9e;
+    background-color: #FFD600;
+    border-color: #FFD600;
+    color: #333;
 }
 
 .spinner-grow {
