@@ -19,10 +19,10 @@ input, label {
 }
 
 .loader {
-    border-top: 5px solid #104a9e;
-    border-right: 5px solid #ffcb06;
-    border-left: 5px solid #ffcb06;
-    border-bottom: 5px solid #104a9e;
+    border-top: 5px solid #FFAA33;
+    border-right: 5px solid #FADA5E;
+    border-left: 5px solid #FADA5E;
+    border-bottom: 5px solid #FFAA33;
     border-radius: 50%;
     width: 20px;
     height: 20px;
@@ -34,11 +34,11 @@ input, label {
 }
 
 .btn-primary {
-    background-color: #FFD600;
-    border-color: #FFD600;
+    background-color: #FADA5E;
+    border-color: #FADA5E;
     color: #333;
 }
 
 .spinner-grow {
-    color: #ffcb06;
+    color: #FADA5E;
 }
