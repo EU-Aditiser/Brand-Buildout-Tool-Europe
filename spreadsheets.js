@@ -291,9 +291,8 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   // Expanded header row for Headline 1-15 and their positions
   const rawHeaderRow = [
     "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", "Description Line 1", "Description Line 2",
-    // Headlines and positions
-    ...Array.from({length: 15}, (_, i) => `Headline ${i+1}`),
-    ...Array.from({length: 15}, (_, i) => `Headline ${i+1} position`),
+    "Headline 1", "Headline 1 position",
+    ...Array.from({length: 14}, (_, i) => `Headline ${i+2}`),
     "Path 1",
     "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4", "Max CPC", "Flexible Reach"
   ];
@@ -349,12 +348,10 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
 
           // Headline 2–15 (columns 11 to 24)
           let headlines = [headline1];
-          let headlinePositions = [headline1Position];
           for (let h = 0; h < 14; h++) {
             const idx = 11 + h; // Headline 2 is at 11, Headline 3 at 12, ..., Headline 15 at 24
             let headline = !isCellEmpty(adCopyRowData[i].values[idx]) ? adCopyRowData[i].values[idx].userEnteredValue.stringValue : "";
             headlines.push(headline);
-            headlinePositions.push(""); // No position columns for Headline 2–15
           }
           const path1 = path;
           const description1 = !isCellEmpty(adCopyRowData[i].values[39]) ? adCopyRowData[i].values[39].userEnteredValue.stringValue : "";
@@ -364,7 +361,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description4 = !isCellEmpty(adCopyRowData[i].values[43]) ? adCopyRowData[i].values[43].userEnteredValue.stringValue : "";
           const adRowValues = [
             campaign, adGroup, "", "", finalURL, labels, adType, status, descriptionLine1, descriptionLine2,
-            ...headlines, ...headlinePositions, path1,
+            ...headlines, headline1Position, path1,
             description1, description1Position, description2, description3, description4, "", ""
           ];
           const adRow = createRowData(adRowValues);
