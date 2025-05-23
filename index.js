@@ -47,7 +47,7 @@ function initClient() {
     document.getElementById('patch_notes').innerText=patchNotes;    
     
   }, function(error) {
-    appendPre(JSON.stringify(error, null, 2));
+    console.error("Google API client init error:", error);
   });
 }
 
