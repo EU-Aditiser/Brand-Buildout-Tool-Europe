@@ -1,0 +1,21 @@
+"{
+  "error": {
+    "code": 400,
+    "message": "Invalid JSON payload received. Unknown name \"range\": Cannot bind query parameter. Field 'range' could not be found in request message.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "description": "Invalid JSON payload received. Unknown name \"range\": Cannot bind query parameter. Field 'range' could not be found in request message."
+          }
+        ]
+      }
+    ]
+  }
+}
+"Invalid value at 'requests[0].delete_dimension.range.dimension' (type.googleapis.com/google.apps.sheets.v4.Dimension), "COLS""
+"
+
+"Invalid requests[0].insertDimension: range.startIndex must not be 0 if inheritFromBefore is true."
