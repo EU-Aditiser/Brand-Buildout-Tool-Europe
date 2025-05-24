@@ -391,9 +391,9 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           // These should be after Description Line 1 and 2, but before Headline 1
           const description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
           const description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[12]) ? adCopyRowData[i].values[12].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[13]) ? adCopyRowData[i].values[13].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[35]) ? adCopyRowData[i].values[35].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[36]) ? adCopyRowData[i].values[36].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[37]) ? adCopyRowData[i].values[37].userEnteredValue.stringValue : "";
           
           // Log what we found
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
