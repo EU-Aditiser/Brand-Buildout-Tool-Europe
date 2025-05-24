@@ -121,31 +121,23 @@ function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
   const rows = sheet.data[0].rowData;
   
-  // Add detailed logging of the first row structure
+  // Log the complete structure of the first row
   if (rows && rows.length > 0 && rows[0].values) {
-    console.log("=== First Row Structure (All Columns) ===");
+    console.log("=== COMPLETE FIRST ROW STRUCTURE ===");
     rows[0].values.forEach((value, index) => {
       const header = value?.userEnteredValue?.stringValue || '';
-      // Highlight description-related columns
-      if (header.toLowerCase().includes('description')) {
-        console.log(`Column ${index}: "${header}" <-- DESCRIPTION COLUMN`);
-      } else {
-        console.log(`Column ${index}: "${header}"`);
-      }
+      console.log(`Column ${index}: "${header}"`);
     });
   }
   
-  // Log the first data row to see actual values
+  // Log the complete structure of the first data row
   if (rows && rows.length > 1) {
-    console.log("=== First Data Row Values (Looking for Description Data) ===");
+    console.log("=== COMPLETE FIRST DATA ROW ===");
     const firstDataRow = rows[1];
     if (firstDataRow && firstDataRow.values) {
       firstDataRow.values.forEach((value, index) => {
         const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-        if (val && val.length > 0) {
-          // Log all non-empty values to help identify where descriptions might be
-          console.log(`Index ${index}: "${val}"`);
-        }
+        console.log(`Index ${index}: "${val}"`);
       });
     }
   }
@@ -386,16 +378,23 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Try indices 7-11 for description values (common position after description lines)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[9]) ? adCopyRowData[i].values[9].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[10]) ? adCopyRowData[i].values[10].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
+          // Log the complete row data before processing
+          console.log("=== COMPLETE ROW DATA BEFORE PROCESSING ===");
+          adCopyRowData[i].values.forEach((value, index) => {
+            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+            console.log(`Index ${index}: "${val}"`);
+          });
           
-          // Log the extracted values to verify correct mapping
-          console.log("=== Extracted Values ===");
-          console.log("Description values (from indices 7-11):", {
+          // Try indices 25-29 for description values (after all headlines)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          
+          // Log what we found
+          console.log("=== EXTRACTED VALUES ===");
+          console.log("Description values (from indices 25-29):", {
             description1,
             description1Position,
             description2,
@@ -404,7 +403,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           });
           
           // Log all non-empty values in the row to help identify where descriptions might be
-          console.log("=== All Non-Empty Values in Row ===");
+          console.log("=== ALL NON-EMPTY VALUES IN ROW ===");
           adCopyRowData[i].values.forEach((value, index) => {
             if (!isCellEmpty(value)) {
               const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
@@ -412,6 +411,21 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
                 console.log(`Index ${index}: "${val}"`);
               }
             }
+          });
+          
+          // Also try indices 35-39 as a backup
+          const backupDescription1 = !isCellEmpty(adCopyRowData[i].values[35]) ? adCopyRowData[i].values[35].userEnteredValue.stringValue : "";
+          const backupDescription1Position = !isCellEmpty(adCopyRowData[i].values[36]) ? (adCopyRowData[i].values[36].userEnteredValue.stringValue || adCopyRowData[i].values[36].userEnteredValue.numberValue || "") : "";
+          const backupDescription2 = !isCellEmpty(adCopyRowData[i].values[37]) ? adCopyRowData[i].values[37].userEnteredValue.stringValue : "";
+          const backupDescription3 = !isCellEmpty(adCopyRowData[i].values[38]) ? adCopyRowData[i].values[38].userEnteredValue.stringValue : "";
+          const backupDescription4 = !isCellEmpty(adCopyRowData[i].values[39]) ? adCopyRowData[i].values[39].userEnteredValue.stringValue : "";
+          
+          console.log("Backup description values (from indices 35-39):", {
+            backupDescription1,
+            backupDescription1Position,
+            backupDescription2,
+            backupDescription3,
+            backupDescription4
           });
           
           const adRowValues = [
