@@ -387,34 +387,40 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Read description values from their correct positions
-          // These should be after Description Line 1 and 2, but before Headline 1
-          
           // Pad the row to ensure we can safely read all columns up to index 29
           while (adCopyRowData[i].values.length < 30) {
             adCopyRowData[i].values.push({});
           }
 
+          // Log all non-empty values in the row to help find description values
+          console.log("=== ALL NON-EMPTY VALUES IN ROW ===");
+          adCopyRowData[i].values.forEach((value, index) => {
+            if (!isCellEmpty(value)) {
+              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
+              if (val && val.length > 0) {
+                console.log(`Index ${index}: "${val}"`);
+              }
+            }
+          });
 
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
-          
-          // Add detailed logging for description columns and surrounding values
-          console.log("=== DETAILED DESCRIPTION COLUMN ANALYSIS ===");
-          console.log("Row values length:", adCopyRowData[i].values.length);
-          for (let idx = 24; idx <= 30; idx++) {
-            const value = adCopyRowData[i].values[idx];
-            console.log(`Column at index ${idx}:`, {
-              exists: !!value,
-              hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
-              value: value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || 'empty',
-              rawValue: JSON.stringify(value)
-            });
+          // Try reading description values from different positions
+          // First try the original positions (25-29)
+          let description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          let description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          let description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          let description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+
+          // If we don't find values, try alternative positions
+          if (!description2 && !description3 && !description4) {
+            // Try positions after Description Line 1 and 2
+            description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
+            description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
+            description2 = !isCellEmpty(adCopyRowData[i].values[9]) ? adCopyRowData[i].values[9].userEnteredValue.stringValue : "";
+            description3 = !isCellEmpty(adCopyRowData[i].values[10]) ? adCopyRowData[i].values[10].userEnteredValue.stringValue : "";
+            description4 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
           }
-          
+
           // Log what we found
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
