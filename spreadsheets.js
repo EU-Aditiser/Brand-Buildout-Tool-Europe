@@ -443,15 +443,15 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           adCopyRowData[i].values.push({});
         }
 
-        const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+        const description1 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
 
-        const description1Position = !isCellEmpty(adCopyRowData[i].values[26])
-          ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "")
+        const description1Position = !isCellEmpty(adCopyRowData[i].values[27])
+          ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[27].userEnteredValue.numberValue || "")
           : "";
 
-        const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-        const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-        const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+        const description2 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+        const description3 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+        const description4 = !isCellEmpty(adCopyRowData[i].values[30]) ? adCopyRowData[i].values[30].userEnteredValue.stringValue : "";
 
 
           // Log what we found
