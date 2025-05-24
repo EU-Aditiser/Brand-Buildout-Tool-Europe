@@ -382,19 +382,22 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           console.log("=== COMPLETE ROW DATA BEFORE PROCESSING ===");
           adCopyRowData[i].values.forEach((value, index) => {
             const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-            console.log(`Index ${index}: "${val}"`);
+            if (val && val.length > 0) {
+              console.log(`Index ${index}: "${val}"`);
+            }
           });
           
-          // Try indices 25-29 for description values (after all headlines)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          // Read description values from their correct positions
+          // These should be after Description Line 1 and 2, but before Headline 1
+          const description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[9]) ? adCopyRowData[i].values[9].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[10]) ? adCopyRowData[i].values[10].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
           
           // Log what we found
           console.log("=== EXTRACTED VALUES ===");
-          console.log("Description values (from indices 25-29):", {
+          console.log("Description values (from indices 7-11):", {
             description1,
             description1Position,
             description2,
@@ -411,21 +414,6 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
                 console.log(`Index ${index}: "${val}"`);
               }
             }
-          });
-          
-          // Also try indices 35-39 as a backup
-          const backupDescription1 = !isCellEmpty(adCopyRowData[i].values[35]) ? adCopyRowData[i].values[35].userEnteredValue.stringValue : "";
-          const backupDescription1Position = !isCellEmpty(adCopyRowData[i].values[36]) ? (adCopyRowData[i].values[36].userEnteredValue.stringValue || adCopyRowData[i].values[36].userEnteredValue.numberValue || "") : "";
-          const backupDescription2 = !isCellEmpty(adCopyRowData[i].values[37]) ? adCopyRowData[i].values[37].userEnteredValue.stringValue : "";
-          const backupDescription3 = !isCellEmpty(adCopyRowData[i].values[38]) ? adCopyRowData[i].values[38].userEnteredValue.stringValue : "";
-          const backupDescription4 = !isCellEmpty(adCopyRowData[i].values[39]) ? adCopyRowData[i].values[39].userEnteredValue.stringValue : "";
-          
-          console.log("Backup description values (from indices 35-39):", {
-            backupDescription1,
-            backupDescription1Position,
-            backupDescription2,
-            backupDescription3,
-            backupDescription4
           });
           
           const adRowValues = [
