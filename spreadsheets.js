@@ -531,11 +531,13 @@ function createPath(brandTitle) {
 }
 
 function isCellEmpty(cell) {
-  
-  return !cell || !cell.userEnteredValue || (
-    !cell.userEnteredValue.stringValue && typeof cell.userEnteredValue.numberValue === "undefined"
+  return (
+    !cell ||
+    !cell.userEnteredValue ||
+    (typeof cell.userEnteredValue.stringValue === "undefined" && typeof cell.userEnteredValue.numberValue === "undefined")
   );
 }
+
 
 /**potentially hazasrdous */
 function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, campaignType) {
