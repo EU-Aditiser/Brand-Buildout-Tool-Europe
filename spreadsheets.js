@@ -121,29 +121,24 @@ function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
   const rows = sheet.data[0].rowData;
   
-  // Add detailed logging of the first row structure with focus on description columns
+  // Add detailed logging of the first row structure
   if (rows && rows.length > 0 && rows[0].values) {
-    console.log("=== First Row Structure (Focus on Description Columns) ===");
+    console.log("=== First Row Structure (All Columns) ===");
     rows[0].values.forEach((value, index) => {
       const header = value?.userEnteredValue?.stringValue || '';
-      // Log all columns but highlight description-related ones
-      if (header.toLowerCase().includes('description')) {
-        console.log(`Column ${index}: "${header}" <-- DESCRIPTION COLUMN`);
-      } else {
-        console.log(`Column ${index}: "${header}"`);
-      }
+      console.log(`Column ${index}: "${header}"`);
     });
   }
   
-  // Log a sample row to see where description values might be
+  // Log the first data row to see actual values
   if (rows && rows.length > 1) {
-    console.log("=== Sample Row Values (Looking for Description Data) ===");
-    const sampleRow = rows[1];
-    if (sampleRow && sampleRow.values) {
-      sampleRow.values.forEach((value, index) => {
+    console.log("=== First Data Row Values ===");
+    const firstDataRow = rows[1];
+    if (firstDataRow && firstDataRow.values) {
+      firstDataRow.values.forEach((value, index) => {
         const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
         if (val && val.length > 0) {
-          console.log(`Index ${index} has value: "${val}"`);
+          console.log(`Index ${index}: "${val}"`);
         }
       });
     }
@@ -386,7 +381,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const path1 = path;
           
           // Log the row data to see where description values are
-          console.log("=== Ad Copy Row Values ===");
+          console.log("=== Current Row Values ===");
           adCopyRowData[i].values.forEach((value, index) => {
             const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
             if (val && val.length > 0) {
@@ -394,24 +389,23 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             }
           });
           
-          // Update indices for description values to be after all headlines
-          // Using indices 40-44 to ensure we're after all headlines and not mixing with them
-          const description1 = !isCellEmpty(adCopyRowData[i].values[40]) ? adCopyRowData[i].values[40].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[41]) ? (adCopyRowData[i].values[41].userEnteredValue.stringValue || adCopyRowData[i].values[41].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[42]) ? adCopyRowData[i].values[42].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[43]) ? adCopyRowData[i].values[43].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[44]) ? adCopyRowData[i].values[44].userEnteredValue.stringValue : "";
+          // Try indices 30-34 for description values (after headlines but before other data)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[30]) ? adCopyRowData[i].values[30].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[31]) ? (adCopyRowData[i].values[31].userEnteredValue.stringValue || adCopyRowData[i].values[31].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[32]) ? adCopyRowData[i].values[32].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[33]) ? adCopyRowData[i].values[33].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[34]) ? adCopyRowData[i].values[34].userEnteredValue.stringValue : "";
           
           // Log the extracted values to verify correct mapping
           console.log("=== Extracted Values ===");
-          console.log("Headlines 6-10 (to verify they're not mixed with descriptions):", {
+          console.log("Headlines 6-10 (should be in headlines array):", {
             headline6: headlines[5],
             headline7: headlines[6],
             headline8: headlines[7],
             headline9: headlines[8],
             headline10: headlines[9]
           });
-          console.log("Description values (from indices 40-44):", {
+          console.log("Description values (from indices 30-34):", {
             description1,
             description1Position,
             description2,
