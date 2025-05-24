@@ -121,13 +121,32 @@ function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
   const rows = sheet.data[0].rowData;
   
-  // Add detailed logging of the first row structure
+  // Add detailed logging of the first row structure with focus on description columns
   if (rows && rows.length > 0 && rows[0].values) {
-    console.log("=== First Row Structure ===");
+    console.log("=== First Row Structure (Focus on Description Columns) ===");
     rows[0].values.forEach((value, index) => {
       const header = value?.userEnteredValue?.stringValue || '';
-      console.log(`Column ${index}: "${header}"`);
+      // Log all columns but highlight description-related ones
+      if (header.toLowerCase().includes('description')) {
+        console.log(`Column ${index}: "${header}" <-- DESCRIPTION COLUMN`);
+      } else {
+        console.log(`Column ${index}: "${header}"`);
+      }
     });
+  }
+  
+  // Log a sample row to see where description values might be
+  if (rows && rows.length > 1) {
+    console.log("=== Sample Row Values (Looking for Description Data) ===");
+    const sampleRow = rows[1];
+    if (sampleRow && sampleRow.values) {
+      sampleRow.values.forEach((value, index) => {
+        const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+        if (val && val.length > 0) {
+          console.log(`Index ${index} has value: "${val}"`);
+        }
+      });
+    }
   }
   
   for(let i = 0; i < rows.length; i++) {
@@ -366,24 +385,28 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Log the row data to see where description values are
-          console.log("=== Ad Copy Row Values ===");
+          // Try different indices for description values
+          // First attempt: indices 15-19 (common position after headlines)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[16]) ? (adCopyRowData[i].values[16].userEnteredValue.stringValue || adCopyRowData[i].values[16].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[17]) ? adCopyRowData[i].values[17].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[18]) ? adCopyRowData[i].values[18].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[19]) ? adCopyRowData[i].values[19].userEnteredValue.stringValue : "";
+          
+          // Log all non-empty values in the row to help identify where descriptions might be
+          console.log("=== Row Values Analysis ===");
+          console.log("Non-empty values in row:");
           adCopyRowData[i].values.forEach((value, index) => {
-            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-            console.log(`Index ${index}: "${val}"`);
+            if (!isCellEmpty(value)) {
+              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
+              if (val && val.length > 0) {
+                console.log(`Index ${index}: "${val}"`);
+              }
+            }
           });
           
-          // Update indices for description values based on actual data structure
-          // Looking for values around where descriptions should be
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
-          
-          // Log the extracted values to verify correct mapping
-          console.log("=== Extracted Values ===");
-          console.log("Description values at indices 25-29:", {
+          console.log("=== Description Values Found ===");
+          console.log("Using indices 15-19:", {
             description1,
             description1Position,
             description2,
