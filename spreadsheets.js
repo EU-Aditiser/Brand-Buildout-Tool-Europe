@@ -385,28 +385,33 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Try different indices for description values
-          // First attempt: indices 15-19 (common position after headlines)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[16]) ? (adCopyRowData[i].values[16].userEnteredValue.stringValue || adCopyRowData[i].values[16].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[17]) ? adCopyRowData[i].values[17].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[18]) ? adCopyRowData[i].values[18].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[19]) ? adCopyRowData[i].values[19].userEnteredValue.stringValue : "";
-          
-          // Log all non-empty values in the row to help identify where descriptions might be
-          console.log("=== Row Values Analysis ===");
-          console.log("Non-empty values in row:");
+          // Log the row data to see where description values are
+          console.log("=== Ad Copy Row Values ===");
           adCopyRowData[i].values.forEach((value, index) => {
-            if (!isCellEmpty(value)) {
-              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
-              if (val && val.length > 0) {
-                console.log(`Index ${index}: "${val}"`);
-              }
+            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+            if (val && val.length > 0) {
+              console.log(`Index ${index}: "${val}"`);
             }
           });
           
-          console.log("=== Description Values Found ===");
-          console.log("Using indices 15-19:", {
+          // Update indices for description values to be after all headlines
+          // Using indices 40-44 to ensure we're after all headlines and not mixing with them
+          const description1 = !isCellEmpty(adCopyRowData[i].values[40]) ? adCopyRowData[i].values[40].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[41]) ? (adCopyRowData[i].values[41].userEnteredValue.stringValue || adCopyRowData[i].values[41].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[42]) ? adCopyRowData[i].values[42].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[43]) ? adCopyRowData[i].values[43].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[44]) ? adCopyRowData[i].values[44].userEnteredValue.stringValue : "";
+          
+          // Log the extracted values to verify correct mapping
+          console.log("=== Extracted Values ===");
+          console.log("Headlines 6-10 (to verify they're not mixed with descriptions):", {
+            headline6: headlines[5],
+            headline7: headlines[6],
+            headline8: headlines[7],
+            headline9: headlines[8],
+            headline10: headlines[9]
+          });
+          console.log("Description values (from indices 40-44):", {
             description1,
             description1Position,
             description2,
