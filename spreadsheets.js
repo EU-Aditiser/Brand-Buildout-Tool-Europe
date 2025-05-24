@@ -443,18 +443,15 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           adCopyRowData[i].values.push({});
         }
 
-        // Safe getter to avoid undefined or missing userEnteredValue
-        const safeGet = (cell) => {
-          if (!cell || !cell.userEnteredValue) return "";
-          return cell.userEnteredValue.stringValue || cell.userEnteredValue.numberValue || "";
-        };
+        const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
 
-        // Read description values directly by index
-        const description1         = safeGet(adCopyRowData[i].values[25]);
-        const description1Position = safeGet(adCopyRowData[i].values[26]);
-        const description2         = safeGet(adCopyRowData[i].values[27]);
-        const description3         = safeGet(adCopyRowData[i].values[28]);
-        const description4         = safeGet(adCopyRowData[i].values[29]);
+        const description1Position = !isCellEmpty(adCopyRowData[i].values[26])
+          ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "")
+          : "";
+
+        const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+        const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+        const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
 
 
           // Log what we found
@@ -534,7 +531,7 @@ function createPath(brandTitle) {
 }
 
 function isCellEmpty(cell) {
-  /*return typeof cell === "undefined" || !cell.hasOwnProperty('userEnteredValue')*/
+  
   return !cell || !cell.userEnteredValue || (
     !cell.userEnteredValue.stringValue && typeof cell.userEnteredValue.numberValue === "undefined"
   );
