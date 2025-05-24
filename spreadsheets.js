@@ -120,7 +120,15 @@ function rowIsEmpty(row) {
 function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
   const rows = sheet.data[0].rowData;
-  console.log("First row structure:", rows[0]?.values?.map((v, i) => `${i}: ${v?.userEnteredValue?.stringValue || ''}`));
+  
+  // Add detailed logging of the first row structure
+  if (rows && rows.length > 0 && rows[0].values) {
+    console.log("=== First Row Structure ===");
+    rows[0].values.forEach((value, index) => {
+      const header = value?.userEnteredValue?.stringValue || '';
+      console.log(`Column ${index}: "${header}"`);
+    });
+  }
   
   for(let i = 0; i < rows.length; i++) {
     if(!rowIsEmpty(rows[i]) && rows[i].values[1].hasOwnProperty('userEnteredValue')) {
@@ -359,28 +367,28 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const path1 = path;
           
           // Log the row data to see where description values are
-          console.log("Ad copy row values:", adCopyRowData[i].values.map((v, idx) => 
-            `${idx}: ${v?.userEnteredValue?.stringValue || v?.userEnteredValue?.numberValue || ''}`
-          ));
+          console.log("=== Ad Copy Row Values ===");
+          adCopyRowData[i].values.forEach((value, index) => {
+            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+            console.log(`Index ${index}: "${val}"`);
+          });
           
-          // Update indices for description values to ensure they don't overlap with headlines
-          // Description values should be after all headlines (after index 24)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[35]) ? adCopyRowData[i].values[35].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[36]) ? (adCopyRowData[i].values[36].userEnteredValue.stringValue || adCopyRowData[i].values[36].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[37]) ? adCopyRowData[i].values[37].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[38]) ? adCopyRowData[i].values[38].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[39]) ? adCopyRowData[i].values[39].userEnteredValue.stringValue : "";
+          // Update indices for description values based on actual data structure
+          // Looking for values around where descriptions should be
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
           
           // Log the extracted values to verify correct mapping
-          console.log("Extracted values:", {
-            headlines: headlines.slice(5, 10), // Headlines 6-10 that were being mixed up
-            descriptions: {
-              description1,
-              description1Position,
-              description2,
-              description3,
-              description4
-            }
+          console.log("=== Extracted Values ===");
+          console.log("Description values at indices 25-29:", {
+            description1,
+            description1Position,
+            description2,
+            description3,
+            description4
           });
           
           const adRowValues = [
