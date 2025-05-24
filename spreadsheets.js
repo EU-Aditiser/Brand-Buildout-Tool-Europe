@@ -403,22 +403,39 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             }
           });
 
-          // Try reading description values from different positions
-          // First try the original positions (25-29)
-          let description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
-          let description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          let description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          let description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          // Read description values from their correct positions
+          // These should be after Description Line 1 and 2, but before Headline 1
+          let description1 = "";
+          let description1Position = "";
+          let description2 = "";
+          let description3 = "";
+          let description4 = "";
 
-          // If we don't find values, try alternative positions
-          if (!description2 && !description3 && !description4) {
-            // Try positions after Description Line 1 and 2
-            description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
-            description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
-            description2 = !isCellEmpty(adCopyRowData[i].values[9]) ? adCopyRowData[i].values[9].userEnteredValue.stringValue : "";
-            description3 = !isCellEmpty(adCopyRowData[i].values[10]) ? adCopyRowData[i].values[10].userEnteredValue.stringValue : "";
-            description4 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
+          // Try to find description values by looking for specific patterns
+          for (let idx = 0; idx < adCopyRowData[i].values.length; idx++) {
+            const value = adCopyRowData[i].values[idx];
+            if (!isCellEmpty(value)) {
+              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
+              if (val && val.length > 0) {
+                // Skip if the value contains headline-related text
+                if (val.includes("Headline") || val.includes("Keyword")) {
+                  continue;
+                }
+                
+                // Assign values to descriptions if they're not already set
+                if (!description1) {
+                  description1 = val;
+                } else if (!description1Position && !isNaN(val)) {
+                  description1Position = val;
+                } else if (!description2) {
+                  description2 = val;
+                } else if (!description3) {
+                  description3 = val;
+                } else if (!description4) {
+                  description4 = val;
+                }
+              }
+            }
           }
 
           // Log what we found
