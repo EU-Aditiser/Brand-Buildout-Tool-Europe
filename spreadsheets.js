@@ -446,7 +446,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         const description1 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
 
         const description1Position = !isCellEmpty(adCopyRowData[i].values[27])
-          ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[27].userEnteredValue.numberValue || "")
+          ? (adCopyRowData[i].values[27].userEnteredValue.stringValue || adCopyRowData[i].values[27].userEnteredValue.numberValue || "")
           : "";
 
         const description2 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
