@@ -121,23 +121,32 @@ function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
   const rows = sheet.data[0].rowData;
   
-  // Log the complete structure of the first row
+  // Log the complete structure of the first row with detailed information
   if (rows && rows.length > 0 && rows[0].values) {
-    console.log("=== COMPLETE FIRST ROW STRUCTURE ===");
+    console.log("=== COMPLETE FIRST ROW STRUCTURE WITH DETAILS ===");
     rows[0].values.forEach((value, index) => {
       const header = value?.userEnteredValue?.stringValue || '';
-      console.log(`Column ${index}: "${header}"`);
+      console.log(`Column ${index}: "${header}"`, {
+        hasValue: !!value,
+        hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+        valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none'
+      });
     });
   }
   
-  // Log the complete structure of the first data row
+  // Log the complete structure of the first data row with detailed information
   if (rows && rows.length > 1) {
-    console.log("=== COMPLETE FIRST DATA ROW ===");
+    console.log("=== COMPLETE FIRST DATA ROW WITH DETAILS ===");
     const firstDataRow = rows[1];
     if (firstDataRow && firstDataRow.values) {
       firstDataRow.values.forEach((value, index) => {
         const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-        console.log(`Index ${index}: "${val}"`);
+        console.log(`Index ${index}: "${val}"`, {
+          hasValue: !!value,
+          hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+          valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none',
+          rawValue: value
+        });
       });
     }
   }
@@ -386,15 +395,16 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
           const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
           
-          // Add detailed logging for description columns
+          // Add detailed logging for description columns and surrounding values
           console.log("=== DETAILED DESCRIPTION COLUMN ANALYSIS ===");
-          for (let idx = 25; idx <= 29; idx++) {
+          console.log("Row values length:", adCopyRowData[i].values.length);
+          for (let idx = 24; idx <= 30; idx++) {
             const value = adCopyRowData[i].values[idx];
-            console.log(`Description column at index ${idx}:`, {
+            console.log(`Column at index ${idx}:`, {
               exists: !!value,
               hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
               value: value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || 'empty',
-              rawValue: value
+              rawValue: JSON.stringify(value)
             });
           }
           
