@@ -386,6 +386,18 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
           const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
           
+          // Add detailed logging for description columns
+          console.log("=== DETAILED DESCRIPTION COLUMN ANALYSIS ===");
+          for (let idx = 25; idx <= 29; idx++) {
+            const value = adCopyRowData[i].values[idx];
+            console.log(`Description column at index ${idx}:`, {
+              exists: !!value,
+              hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+              value: value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || 'empty',
+              rawValue: value
+            });
+          }
+          
           // Log what we found
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
@@ -396,23 +408,12 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             description4: `[${description4}]`
           });
           
-          // Log all non-empty values in the row to help identify where descriptions might be
-          console.log("=== ALL NON-EMPTY VALUES IN ROW ===");
-          adCopyRowData[i].values.forEach((value, index) => {
-            if (!isCellEmpty(value)) {
-              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
-              if (val && val.length > 0) {
-                console.log(`Index ${index}: "${val}"`);
-              }
-            }
-          });
-          
           // Log the complete row data before processing
           console.log("=== COMPLETE ROW DATA BEFORE PROCESSING ===");
           adCopyRowData[i].values.forEach((value, index) => {
-            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-            if (val && val.length > 0) {
-              console.log(`Index ${index}: "${val}"`);
+            if (index >= 24 && index <= 30) { // Focus on description columns and surrounding values
+              const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+              console.log(`Index ${index}: "${val}" (${value ? 'has value' : 'empty'})`);
             }
           });
           
