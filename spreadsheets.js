@@ -378,22 +378,13 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Log the complete row data before processing
-          console.log("=== COMPLETE ROW DATA BEFORE PROCESSING ===");
-          adCopyRowData[i].values.forEach((value, index) => {
-            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-            if (val && val.length > 0) {
-              console.log(`Index ${index}: "${val}"`);
-            }
-          });
-          
           // Read description values from their correct positions
           // These should be after Description Line 1 and 2, but before Headline 1
           const description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
           const description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[35]) ? adCopyRowData[i].values[35].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[36]) ? adCopyRowData[i].values[36].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[37]) ? adCopyRowData[i].values[37].userEnteredValue.stringValue : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[40]) ? adCopyRowData[i].values[40].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[41]) ? adCopyRowData[i].values[41].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[42]) ? adCopyRowData[i].values[42].userEnteredValue.stringValue : "";
           
           // Log what we found
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
@@ -413,6 +404,15 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
               if (val && val.length > 0) {
                 console.log(`Index ${index}: "${val}"`);
               }
+            }
+          });
+          
+          // Log the complete row data before processing
+          console.log("=== COMPLETE ROW DATA BEFORE PROCESSING ===");
+          adCopyRowData[i].values.forEach((value, index) => {
+            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+            if (val && val.length > 0) {
+              console.log(`Index ${index}: "${val}"`);
             }
           });
           
