@@ -380,11 +380,11 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           
           // Read description values from their correct positions
           // These should be after Description Line 1 and 2, but before Headline 1
-          const description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[40]) ? adCopyRowData[i].values[40].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[41]) ? adCopyRowData[i].values[41].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[42]) ? adCopyRowData[i].values[42].userEnteredValue.stringValue : "";
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
           
           // Log what we found
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
