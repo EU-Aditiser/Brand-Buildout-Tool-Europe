@@ -405,7 +405,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
 
           // Read description values from their correct positions
           // These should be after Description Line 1 and 2, but before Headline 1
-          let description1 = "";
+          /*let description1 = "";
           let description1Position = "";
           let description2 = "";
           let description3 = "";
@@ -436,7 +436,26 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
                 }
               }
             }
-          }
+          }*/
+
+          // Ensure row is padded up to index 29
+        while (adCopyRowData[i].values.length < 30) {
+          adCopyRowData[i].values.push({});
+        }
+
+        // Safe getter to avoid undefined or missing userEnteredValue
+        const safeGet = (cell) => {
+          if (!cell || !cell.userEnteredValue) return "";
+          return cell.userEnteredValue.stringValue || cell.userEnteredValue.numberValue || "";
+        };
+
+        // Read description values directly by index
+        const description1         = safeGet(adCopyRowData[i].values[25]);
+        const description1Position = safeGet(adCopyRowData[i].values[26]);
+        const description2         = safeGet(adCopyRowData[i].values[27]);
+        const description3         = safeGet(adCopyRowData[i].values[28]);
+        const description4         = safeGet(adCopyRowData[i].values[29]);
+
 
           // Log what we found
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
@@ -515,7 +534,10 @@ function createPath(brandTitle) {
 }
 
 function isCellEmpty(cell) {
-  return typeof cell === "undefined" || !cell.hasOwnProperty('userEnteredValue')
+  /*return typeof cell === "undefined" || !cell.hasOwnProperty('userEnteredValue')*/
+  return !cell || !cell.userEnteredValue || (
+    !cell.userEnteredValue.stringValue && typeof cell.userEnteredValue.numberValue === "undefined"
+  );
 }
 
 /**potentially hazasrdous */
