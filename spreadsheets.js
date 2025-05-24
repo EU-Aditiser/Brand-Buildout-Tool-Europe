@@ -390,19 +390,19 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           // Read description values from their correct positions
           // These should be after Description Line 1 and 2, but before Headline 1
           const description1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
-          let description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[9]) ? adCopyRowData[i].values[9].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[10]) ? adCopyRowData[i].values[10].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[8]) ? (adCopyRowData[i].values[8].userEnteredValue.stringValue || adCopyRowData[i].values[8].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[12]) ? adCopyRowData[i].values[12].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[13]) ? adCopyRowData[i].values[13].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
           
           // Log what we found
-          console.log("=== EXTRACTED VALUES ===");
-          console.log("Description values (from indices 7-11):", {
-            description1,
-            description1Position,
-            description2,
-            description3,
-            description4
+          console.log("=== EXTRACTED DESCRIPTION VALUES ===");
+          console.log("Description values:", {
+            description1: `[${description1}]`,
+            description1Position: `[${description1Position}]`,
+            description2: `[${description2}]`,
+            description3: `[${description3}]`,
+            description4: `[${description4}]`
           });
           
           // Log all non-empty values in the row to help identify where descriptions might be
