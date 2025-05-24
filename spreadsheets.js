@@ -389,6 +389,13 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           
           // Read description values from their correct positions
           // These should be after Description Line 1 and 2, but before Headline 1
+          
+          // Pad the row to ensure we can safely read all columns up to index 29
+          while (adCopyRowData[i].values.length < 30) {
+            adCopyRowData[i].values.push({});
+          }
+
+
           const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
           const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
           const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
