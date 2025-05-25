@@ -280,15 +280,14 @@ function getThirdLevelDomainFromSheet(sheet, account) {
 }
 
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
-  // Header row with exact columns as specified
+  // Header row with exact columns as specified - removed Max CPC and Flexible Reach
   const rawHeaderRow = [
     "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", 
     "Description Line 1", "Description Line 2", 
     "Headline 1", "Headline 1 position", "Headline 2", "Headline 3", "Path 1", 
     "Headline 4", "Headline 5", "Headline 6", "Headline 7", "Headline 8", "Headline 9", 
     "Headline 10", "Headline 11", "Headline 12", "Headline 13", "Headline 14", "Headline 15",
-    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4",
-    "Max CPC", "Flexible Reach"
+    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
   ];
   
   let masterSpreadsheet = createSpreadSheet(account + " Buildout", rawHeaderRow);
@@ -433,11 +432,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             description1Position, // description 1 position
             descriptions[1], // description 2
             descriptions[2], // description 3
-            descriptions[3], // description 4
-            "0.5", // max cpc
-            campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : 
-            campaignType === "Retention" ? "Genders;Ages;Parental status;Household incomes" :
-            "Genders;Ages;Parental status;Household incomes" // flexible reach based on campaign type
+            descriptions[3] // description 4
           ];
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
@@ -501,8 +496,13 @@ function isCellEmpty(cell) {
 
 /**potentially hazasrdous */
 function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, campaignType) {
-  const flexibleReach = campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : "Genders;Ages;Parental status;Household incomes";
-  return createRowData([campaign, adGroup, "", "", "" , "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "0.5", flexibleReach])
+  return createRowData([
+    campaign, adGroup, "", "", "", "", "", campaignStatus, "", "", // Campaign through Status
+    "", "", // Description Line 1, 2
+    ...Array(15).fill(""), // Headline 1-15
+    "", // Headline 1 position
+    "", "", "", "", "" // Description 1-4 and Description 1 position
+  ]);
 }
 
 function indexIncluded (indexes, index) {
