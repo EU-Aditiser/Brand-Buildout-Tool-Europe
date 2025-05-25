@@ -131,9 +131,11 @@ function getAdCopyRowData(sheet, account, language, type) {
   // Log the complete structure of the first row with detailed information
   if (rows && rows.length > 0 && rows[0] && rows[0].values) {
     console.log("=== COMPLETE FIRST ROW STRUCTURE WITH DETAILS ===");
+    console.log("First row headers:");
     rows[0].values.forEach((value, index) => {
       const header = value?.userEnteredValue?.stringValue || '';
-      console.log(`Column ${index}: "${header}"`, {
+      const columnLetter = toLetters(index + 1);
+      console.log(`Column ${columnLetter} (${index}): "${header}"`, {
         hasValue: !!value,
         hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
         valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none'
