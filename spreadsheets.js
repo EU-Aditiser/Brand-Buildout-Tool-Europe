@@ -719,6 +719,8 @@ function copyRowData(row) {
   let values = [];
   console.log("=== COPYING ROW DATA ===");
   console.log("Original row length:", row.values.length);
+  
+  // Log the original values for debugging
   console.log("Original row values:", row.values.map((v, idx) => ({
     index: idx,
     column: toLetters(idx + 1),
@@ -726,12 +728,20 @@ function copyRowData(row) {
     value: v?.userEnteredValue?.stringValue || v?.userEnteredValue?.numberValue || ''
   })));
   
-  for(let i = 0; i < row.values.length; i++) {
-    if(row.values[i].hasOwnProperty("userEnteredValue")) {
-      values.push(row.values[i].userEnteredValue.stringValue);
+  // Only copy values up to the expected number of columns (26 for A-Z)
+  const maxColumns = 26; // A through Z
+  for(let i = 0; i < Math.min(row.values.length, maxColumns); i++) {
+    if(row.values[i]?.hasOwnProperty("userEnteredValue")) {
+      const value = row.values[i].userEnteredValue;
+      values.push(value.stringValue || value.numberValue || "");
     } else {
       values.push(""); // Push empty string for columns without userEnteredValue
     }
+  }
+  
+  // Pad with empty strings if needed
+  while (values.length < maxColumns) {
+    values.push("");
   }
   
   console.log("Copied values:", values.map((v, idx) => ({
