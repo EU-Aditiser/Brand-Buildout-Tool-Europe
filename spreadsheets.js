@@ -342,6 +342,15 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     throw new Error("Missing required parameters for spreadsheet creation");
   }
 
+  // Log the column mapping for verification
+  console.log("=== COLUMN MAPPING ===");
+  console.log("Description columns are at:");
+  console.log("Description 1: Column X (index 23)");
+  console.log("Description 2: Column AA (index 26)");
+  console.log("Description 3: Column AB (index 27)");
+  console.log("Description 4: Column AC (index 28)");
+  console.log("Description 1 position: Column AD (index 29)");
+
   // Header row with exact columns as specified - updated order to match input file
   const rawHeaderRow = [
     "Campaign", "Account", "Language", "Campaign Type", "Labels", "Ad type", "Status", 
@@ -424,35 +433,43 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Pad the row to ensure we can safely read all columns up to index 29
+          // Pad the row to ensure we can safely read all columns up to index 29 (Column AD)
           while (adCopyRowData[i].values.length < 30) {
             adCopyRowData[i].values.push({});
           }
 
-          // Read description values from their correct positions with new order
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[29]) ? (adCopyRowData[i].values[29].userEnteredValue.stringValue || adCopyRowData[i].values[29].userEnteredValue.numberValue || "") : "";
+          // Read description values from their correct positions (X through AD)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : ""; // Column X
+          const description2 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : ""; // Column AA
+          const description3 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : ""; // Column AB
+          const description4 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : ""; // Column AC
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[29]) ? (adCopyRowData[i].values[29].userEnteredValue.stringValue || adCopyRowData[i].values[29].userEnteredValue.numberValue || "") : ""; // Column AD
 
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
-            description1: `[${description1}]`,
-            description2: `[${description2}]`,
-            description3: `[${description3}]`,
-            description4: `[${description4}]`,
-            description1Position: `[${description1Position}]`
+            description1: `[${description1}] (Column X)`,
+            description2: `[${description2}] (Column AA)`,
+            description3: `[${description3}] (Column AB)`,
+            description4: `[${description4}] (Column AC)`,
+            description1Position: `[${description1Position}] (Column AD)`
           });
           
           // Log the complete row data for the description columns
           console.log("=== DESCRIPTION COLUMNS DATA ===");
-          for (let idx = 25; idx <= 29; idx++) {
-            const value = adCopyRowData[i].values[idx];
+          const descriptionColumns = [
+            { index: 23, name: 'X (Description 1)' },
+            { index: 26, name: 'AA (Description 2)' },
+            { index: 27, name: 'AB (Description 3)' },
+            { index: 28, name: 'AC (Description 4)' },
+            { index: 29, name: 'AD (Description 1 position)' }
+          ];
+          
+          descriptionColumns.forEach(col => {
+            const value = adCopyRowData[i].values[col.index];
             const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-            console.log(`Index ${idx}: "${val}" (${!isCellEmpty(value) ? 'has value' : 'empty'})`);
-          }
+            console.log(`Column ${col.name}: "${val}" (${!isCellEmpty(value) ? 'has value' : 'empty'})`);
+          });
           
           const adRowValues = [
             campaign, account, language, campaign, labels, adType, status,
