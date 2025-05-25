@@ -342,7 +342,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     throw new Error("Missing required parameters for spreadsheet creation");
   }
 
-  // Header row with exact columns as specified
+  // Header row with exact columns as specified - updated order to match input file
   const rawHeaderRow = [
     "Campaign", "Account", "Language", "Campaign Type", "Labels", "Ad type", "Status", 
     "Description Line 1", "Description Line 2",
@@ -350,7 +350,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     "Headline 2", "Headline 3", "Headline 4", "Headline 5", "Headline 6", "Headline 7", 
     "Headline 8", "Headline 9", "Headline 10", "Headline 11", "Headline 12", "Headline 13", 
     "Headline 14", "Headline 15",
-    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
+    "Description 1", "Description 2", "Description 3", "Description 4", "Description 1 position"
   ];
   
   let masterSpreadsheet = createSpreadSheet(account + " Buildout", rawHeaderRow);
@@ -429,21 +429,21 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             adCopyRowData[i].values.push({});
           }
 
-          // Read description values directly from their correct positions (indices 25-29)
+          // Read description values from their correct positions with new order
           const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[29]) ? (adCopyRowData[i].values[29].userEnteredValue.stringValue || adCopyRowData[i].values[29].userEnteredValue.numberValue || "") : "";
 
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
             description1: `[${description1}]`,
-            description1Position: `[${description1Position}]`,
             description2: `[${description2}]`,
             description3: `[${description3}]`,
-            description4: `[${description4}]`
+            description4: `[${description4}]`,
+            description1Position: `[${description1Position}]`
           });
           
           // Log the complete row data for the description columns
@@ -459,7 +459,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             descriptionLine1, descriptionLine2,
             headlines[0], headline1Position, // Headline 1 and its position
             ...headlines.slice(1), // Headline 2-15
-            description1, description1Position, description2, description3, description4
+            description1, description2, description3, description4, description1Position // Updated order to match header
           ];
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
@@ -522,7 +522,7 @@ function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, 
     "", "", // Description Line 1, 2
     ...Array(15).fill(""), // Headline 1-15
     "", // Headline 1 position
-    ...Array(5).fill("") // Description 1-4 and Description 1 position
+    "", "", "", "", "" // Description 1-4 and Description 1 position (in new order)
   ]);
 }
 
