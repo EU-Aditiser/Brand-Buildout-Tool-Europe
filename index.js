@@ -220,8 +220,16 @@ function readTextFile(file)
 
 // GIS Authentication Migration
 function handleCredentialResponse(response) {
-  // Only handle UI, do not set accessToken here
-  document.getElementById('g_id_signin').style.display = 'none';
+  if (response.credential) {
+    // Hide the sign-in button
+    document.getElementById('g_id_signin').style.display = 'none';
+    
+    // Request access token after successful sign-in
+    requestSheetsAccess();
+  } else {
+    console.error("Sign-in failed:", response);
+    alert('Sign-in failed. Please try again.');
+  }
 }
 
 function initGapiClient() {
@@ -236,16 +244,19 @@ function initGapiClient() {
 }
 
 window.onload = function() {
-  // Initialize Google Sign-In
+  // Initialize Google Sign-In with updated configuration
   google.accounts.id.initialize({
     client_id: CLIENT_ID,
     callback: handleCredentialResponse,
-    ux_mode: 'popup',
+    ux_mode: 'redirect', // Change from 'popup' to 'redirect'
     auto_select: false,
-    cancel_on_tap_outside: false
+    cancel_on_tap_outside: false,
+    context: 'signin', // Add context
+    prompt_parent_id: 'g_id_signin', // Specify parent element
+    use_fedcm_for_prompt: true // Use FedCM for better browser compatibility
   });
 
-  // Render the sign-in button
+  // Render the sign-in button with updated configuration
   google.accounts.id.renderButton(
     document.getElementById('g_id_signin'),
     { 
@@ -253,43 +264,70 @@ window.onload = function() {
       size: 'large',
       type: 'standard',
       text: 'signin_with',
-      shape: 'rectangular'
+      shape: 'rectangular',
+      width: 250, // Specify width
+      logo_alignment: 'left'
     }
   );
 
-  // Initialize the token client for OAuth2
+  // Initialize the token client for OAuth2 with updated configuration
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive',
     callback: async (tokenResponse) => {
       if (tokenResponse && tokenResponse.access_token) {
         accessToken = tokenResponse.access_token;
-        gapi.client.setToken({ access_token: accessToken });
         try {
-          await gapi.load('client', initGapiClient);
+          // Initialize GAPI client first
+          await new Promise((resolve, reject) => {
+            gapi.load('client', () => {
+              gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: DISCOVERY_DOCS,
+              }).then(() => {
+                gapi.client.setToken({ access_token: accessToken });
+                resolve();
+              }).catch(reject);
+            });
+          });
         } catch (error) {
-          console.error("Error loading GAPI client:", error);
+          console.error("Error initializing GAPI client:", error);
+          // Show error to user
+          alert('Error initializing Google services. Please try refreshing the page.');
         }
       }
     },
+    error_callback: (error) => {
+      console.error("Token client error:", error);
+      alert('Authentication error. Please try signing in again.');
+    }
   });
 
   // Load the GAPI client
   gapi.load('client', initGapiClient);
 };
 
-// Call this function when you want to request Sheets/Drive access
+// Update the request sheets access function
 function requestSheetsAccess() {
-  tokenClient.requestAccessToken();
+  try {
+    tokenClient.requestAccessToken({
+      prompt: 'consent',
+      hint: 'select_account'
+    });
+  } catch (error) {
+    console.error("Error requesting sheets access:", error);
+    alert('Error accessing Google Sheets. Please try signing in again.');
+  }
 }
 
 accountBuildoutButton.onclick = async function() {
   try {
+    // Check authentication state
     if (!accessToken || isTokenExpired()) {
       await refreshToken();
     }
     
-    // Ensure gapi.client is loaded and initialized
+    // Ensure GAPI client is initialized
     if (!gapi.client || !gapi.client.setToken) {
       await new Promise((resolve, reject) => {
         gapi.load('client', () => {
@@ -297,24 +335,32 @@ accountBuildoutButton.onclick = async function() {
             apiKey: API_KEY,
             discoveryDocs: DISCOVERY_DOCS,
           }).then(() => {
-            gapi.client.setToken({ access_token: accessToken });
+            if (accessToken) {
+              gapi.client.setToken({ access_token: accessToken });
+            }
             resolve();
           }).catch(reject);
         });
       });
     }
 
+    // Proceed with account buildout
     await handleAccountBuildoutClick();
   } catch (error) {
     console.error("Error in account buildout button click:", error);
     if (error.status === 401 || error.status === 403 || 
         (error.result && error.result.error && 
          (error.result.error.code === 401 || error.result.error.code === 403))) {
-      // Token expired or invalid, request new token and retry
-      await refreshToken();
-      return accountBuildoutButton.onclick();
+      try {
+        await refreshToken();
+        return accountBuildoutButton.onclick();
+      } catch (refreshError) {
+        console.error("Error refreshing token:", refreshError);
+        alert('Authentication error. Please sign in again.');
+      }
+    } else {
+      alert('An error occurred. Please try again or refresh the page.');
     }
-    alert('An error occurred. Please try again or refresh the page.');
   }
 };
 
@@ -340,23 +386,31 @@ function isTokenExpired() {
   }
 }
 
-// Add token refresh function
+// Update the token refresh function
 async function refreshToken() {
   return new Promise((resolve, reject) => {
-    tokenClient.requestAccessToken({
-      prompt: 'consent'
-    });
-    // Set up a listener for the token response
-    const tokenListener = (tokenResponse) => {
-      if (tokenResponse && tokenResponse.access_token) {
-        accessToken = tokenResponse.access_token;
-        gapi.client.setToken({ access_token: accessToken });
-        resolve();
-      } else {
-        reject(new Error('Failed to refresh token'));
-      }
-    };
-    // Add the listener
-    tokenClient.callback = tokenListener;
+    try {
+      tokenClient.requestAccessToken({
+        prompt: 'consent',
+        hint: 'select_account' // Add hint for better UX
+      });
+      
+      // Set up a listener for the token response
+      const tokenListener = (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          accessToken = tokenResponse.access_token;
+          gapi.client.setToken({ access_token: accessToken });
+          resolve();
+        } else {
+          reject(new Error('Failed to refresh token'));
+        }
+      };
+      
+      // Add the listener
+      tokenClient.callback = tokenListener;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      reject(error);
+    }
   });
 }
