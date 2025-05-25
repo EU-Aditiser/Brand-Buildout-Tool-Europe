@@ -232,7 +232,7 @@ window.onload = function() {
   google.accounts.id.initialize({
     client_id: CLIENT_ID,
     callback: handleCredentialResponse,
-    ux_mode: 'redirect', // Change from 'popup' to 'redirect'
+    ux_mode: 'popup', // Switch from 'redirect' to 'popup'
     auto_select: false,
     cancel_on_tap_outside: false,
     context: 'signin', // Add context

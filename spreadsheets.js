@@ -400,6 +400,9 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           ];
           const descColIndexes = getColumnIndexesByHeader(adCopyHeaderRow, descHeaders);
           const description1 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1"]]) ? adCopyRowData[i].values[descColIndexes["Description 1"]].userEnteredValue.stringValue : "";
+
+          
+
           console.log(`Row ${i}: Description 1 =`, description1);
           const description1Position = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1 position"]]) ? adCopyRowData[i].values[descColIndexes["Description 1 position"]].userEnteredValue.stringValue : "";
           const description2 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 2"]]) ? adCopyRowData[i].values[descColIndexes["Description 2"]].userEnteredValue.stringValue : "";
