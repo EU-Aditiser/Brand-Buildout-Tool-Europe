@@ -52,10 +52,17 @@ function getAccountsFromManagerSheet(sheet) {
   for(let i = 1; i < sheet.data[0].rowData.length; i++) {
     const row = sheet.data[0].rowData[i];
     if(rowIsEmpty(row)) continue;
-    const accountTitle = row.values[1].userEnteredValue.stringValue;
-
-    if(!accounts.includes(accountTitle)) {
-      accounts.push(accountTitle);
+    if (
+      row.values[1] &&
+      row.values[1].userEnteredValue &&
+      typeof row.values[1].userEnteredValue.stringValue !== "undefined"
+    ) {
+      const accountTitle = row.values[1].userEnteredValue.stringValue;
+      if(!accounts.includes(accountTitle)) {
+        accounts.push(accountTitle);
+      }
+    } else {
+      console.warn("Skipped row in getAccountsFromManagerSheet due to missing account title:", row);
     }
   }
 
