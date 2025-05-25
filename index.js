@@ -12,6 +12,11 @@ let ACCOUNTS = [];
 let accessToken = null;
 let tokenClient;
 
+// Stub for isTokenExpired to prevent ReferenceError
+function isTokenExpired() {
+  // TODO: Implement real token expiration check if needed
+  return false;
+}
 
 /**
  * 
