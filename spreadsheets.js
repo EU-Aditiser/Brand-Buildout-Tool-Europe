@@ -442,17 +442,13 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             descriptions[1], // description 2
             descriptions[2], // description 3
             descriptions[3], // description 4
-            "",            
             "0.5", // max cpc - in its own column
             campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : 
             campaignType === "Retention" ? "Genders;Ages;Parental status;Household incomes" :
             "Genders;Ages;Parental status;Household incomes" // flexible reach - in its own column
           ];
-          // Debug logs to check header and row alignment
-          console.log("Header:", rawHeaderRow);
-          console.log("Row:", adRowValues);
-          console.log("Header length:", rawHeaderRow.length, "Row length:", adRowValues.length);
-          const adRow = createRowData(adRowValues);
+          // Ensure row length matches header
+          const adRow = createRowData(adRowValues.slice(0, rawHeaderRow.length));
           handleFieldLengthLimits(adRow);
         
           masterSpreadsheet.sheets[0].data[0].rowData.push(adRow);
