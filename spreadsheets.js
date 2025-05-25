@@ -465,11 +465,29 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             { index: 29, name: 'AD (Description 1 position)' }
           ];
           
+          // Log the raw data structure for each description column
+          console.log("=== RAW DESCRIPTION COLUMNS DATA ===");
           descriptionColumns.forEach(col => {
             const value = adCopyRowData[i].values[col.index];
-            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-            console.log(`Column ${col.name}: "${val}" (${!isCellEmpty(value) ? 'has value' : 'empty'})`);
+            console.log(`Column ${col.name}:`, {
+              rawValue: value,
+              hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+              userEnteredValue: value?.userEnteredValue,
+              stringValue: value?.userEnteredValue?.stringValue,
+              numberValue: value?.userEnteredValue?.numberValue,
+              isEmpty: isCellEmpty(value)
+            });
           });
+
+          // Also log the complete row values array for context
+          console.log("=== COMPLETE ROW VALUES ARRAY ===");
+          console.log("Row values length:", adCopyRowData[i].values.length);
+          console.log("Row values:", adCopyRowData[i].values.map((v, idx) => ({
+            index: idx,
+            column: toLetters(idx + 1),
+            hasValue: !isCellEmpty(v),
+            value: v?.userEnteredValue?.stringValue || v?.userEnteredValue?.numberValue || ''
+          })));
           
           const adRowValues = [
             campaign, account, language, campaign, labels, adType, status,
