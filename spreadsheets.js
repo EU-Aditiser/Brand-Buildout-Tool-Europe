@@ -386,10 +386,11 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const headline5 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
           const headline6 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
           const headline7 = !isCellEmpty(adCopyRowData[i].values[16]) ? adCopyRowData[i].values[16].userEnteredValue.stringValue : "";
+          const adCopyHeaderRow = adCopySheet.data[0].rowData[0].values.map(cell => cell.userEnteredValue ? cell.userEnteredValue.stringValue : "");
           const descHeaders = [
             "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
           ];
-          const descColIndexes = getColumnIndexesByHeader(adCopyRowData[i].values, descHeaders);
+          const descColIndexes = getColumnIndexesByHeader(adCopyHeaderRow, descHeaders);
           const description1 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1"]]) ? adCopyRowData[i].values[descColIndexes["Description 1"]].userEnteredValue.stringValue : "";
           const description1Position = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1 position"]]) ? adCopyRowData[i].values[descColIndexes["Description 1 position"]].userEnteredValue.stringValue : "";
           const description2 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 2"]]) ? adCopyRowData[i].values[descColIndexes["Description 2"]].userEnteredValue.stringValue : "";
