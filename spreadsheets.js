@@ -279,6 +279,15 @@ function getThirdLevelDomainFromSheet(sheet, account) {
   return "ERROR";
 }
 
+// Helper function to map header names to their column indexes
+function getColumnIndexesByHeader(headerRow, targetHeaders) {
+  const indexMap = {};
+  targetHeaders.forEach(header => {
+    indexMap[header] = headerRow.indexOf(header);
+  });
+  return indexMap;
+}
+
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
   // Header row with exact columns as specified
   const rawHeaderRow = [
@@ -377,22 +386,15 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const headline5 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
           const headline6 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
           const headline7 = !isCellEmpty(adCopyRowData[i].values[16]) ? adCopyRowData[i].values[16].userEnteredValue.stringValue : "";
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          console.log("description1:", description1);
-          let description1Position;
-          if(!isCellEmpty(adCopyRowData[i].values[26])) {
-            description1Position = adCopyRowData[i].values[26].userEnteredValue.stringValue;
-            console.log("description1Position:",description1Position);
-            if(typeof description1Position === "undefined") {
-              description1Position = adCopyRowData[i].values[26].userEnteredValue.numberValue;
-            }
-          } 
-          
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          console.log("description2:", description2);
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          console.log("description3:", description3);
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";console.log("description4:", description4);
+          const descHeaders = [
+            "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
+          ];
+          const descColIndexes = getColumnIndexesByHeader(adCopyRowData[i].values, descHeaders);
+          const description1 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1"]]) ? adCopyRowData[i].values[descColIndexes["Description 1"]].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1 position"]]) ? adCopyRowData[i].values[descColIndexes["Description 1 position"]].userEnteredValue.stringValue : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 2"]]) ? adCopyRowData[i].values[descColIndexes["Description 2"]].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 3"]]) ? adCopyRowData[i].values[descColIndexes["Description 3"]].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 4"]]) ? adCopyRowData[i].values[descColIndexes["Description 4"]].userEnteredValue.stringValue : "";
           const descriptions = [description1, description2, description3, description4];
           console.log("descriptions:", descriptions);
 
@@ -440,6 +442,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             descriptions[1], // description 2
             descriptions[2], // description 3
             descriptions[3], // description 4
+            "",            
             "0.5", // max cpc - in its own column
             campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : 
             campaignType === "Retention" ? "Genders;Ages;Parental status;Household incomes" :
