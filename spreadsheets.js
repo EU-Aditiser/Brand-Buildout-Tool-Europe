@@ -117,78 +117,51 @@ function rowIsEmpty(row) {
   return true;
 }
 
-function getAdCopyRowData(row, rowIndex) {
-  try {
-    // Ensure row has enough columns for reading
-    while (row.length < 30) {
-      row.push({ userEnteredValue: { stringValue: '' } });
-    }
-
-    // Log all non-empty values to help identify where descriptions are
-    console.log('\nALL NON-EMPTY VALUES IN ROW:');
-    row.forEach((cell, index) => {
-      if (cell?.userEnteredValue?.stringValue?.trim()) {
-        console.log(`Column ${index}: "${cell.userEnteredValue.stringValue}"`);
-      }
+function getAdCopyRowData(sheet, account, language, type) {
+  let adCopyRows = [];
+  const rows = sheet.data[0].rowData;
+  
+  // Log the complete structure of the first row with detailed information
+  if (rows && rows.length > 0 && rows[0].values) {
+    console.log("=== COMPLETE FIRST ROW STRUCTURE WITH DETAILS ===");
+    rows[0].values.forEach((value, index) => {
+      const header = value?.userEnteredValue?.stringValue || '';
+      console.log(`Column ${index}: "${header}"`, {
+        hasValue: !!value,
+        hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+        valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none'
+      });
     });
-
-    // Read description values from their correct positions (columns 25-29)
-    // Based on the input file structure:
-    // Description 1 (index 25)
-    // Description 1 position (index 26)
-    // Description 2 (index 27)
-    // Description 3 (index 28)
-    // Description 4 (index 29)
-    const descriptions = [];
-    const descriptionIndices = [25, 27, 28, 29]; // Skip index 26 as it's the position column
-    let descriptionCount = 0;
-
-    for (const index of descriptionIndices) {
-      const value = row[index]?.userEnteredValue?.stringValue?.trim() || '';
-      if (value && !value.includes('Headline') && !value.includes('Description Line')) {
-        descriptions.push(value);
-        descriptionCount++;
-        if (descriptionCount >= 4) break; // We only need 4 descriptions
-      }
-    }
-
-    // Log what we found
-    console.log('\nEXTRACTED DESCRIPTION VALUES:');
-    descriptions.forEach((desc, i) => {
-      console.log(`Description ${i + 1}: "${desc}"`);
-    });
-
-    // Read headline values from their correct positions (columns 9-23)
-    const headlines = [];
-    let headlineCount = 0;
-    // Start reading headlines from index 9 (Headline 1) to index 23 (Headline 15)
-    for (let i = 9; i <= 23 && headlineCount < 15; i++) {
-      const value = row[i]?.userEnteredValue?.stringValue?.trim() || '';
-      if (value && !value.includes('Description')) {
-        headlines.push(value);
-        headlineCount++;
-      }
-    }
-
-    // Log what we found
-    console.log('\nEXTRACTED HEADLINE VALUES:');
-    headlines.forEach((headline, i) => {
-      console.log(`Headline ${i + 1}: "${headline}"`);
-    });
-
-    // Get description position from index 26
-    const description1Position = row[26]?.userEnteredValue?.stringValue?.trim() || '-';
-
-    return {
-      rowNumber: rowIndex + 1,
-      headlines: headlines.slice(0, 15), // Ensure we only take up to 15 headlines
-      descriptions: descriptions.slice(0, 4), // Ensure we only take up to 4 descriptions
-      description1Position: description1Position
-    };
-  } catch (error) {
-    console.error(`Error processing row ${rowIndex + 1}:`, error);
-    return null;
   }
+  
+  // Log the complete structure of the first data row with detailed information
+  if (rows && rows.length > 1) {
+    console.log("=== COMPLETE FIRST DATA ROW WITH DETAILS ===");
+    const firstDataRow = rows[1];
+    if (firstDataRow && firstDataRow.values) {
+      firstDataRow.values.forEach((value, index) => {
+        const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+        console.log(`Index ${index}: "${val}"`, {
+          hasValue: !!value,
+          hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+          valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none',
+          rawValue: value
+        });
+      });
+    }
+  }
+  
+  for(let i = 0; i < rows.length; i++) {
+    if(!rowIsEmpty(rows[i]) && rows[i].values[1].hasOwnProperty('userEnteredValue')) {
+      const adAccount = rows[i].values[1].userEnteredValue.stringValue;
+      const adLanguage = rows[i].values[2].userEnteredValue.stringValue;
+      const adType = rows[i].values[3].userEnteredValue.stringValue;
+      if(adAccount === account && adLanguage === language && adType === type)  {
+        adCopyRows.push(rows[i])
+      }
+    } 
+  }
+  return adCopyRows;
 }
 
 async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accounts) {
@@ -390,7 +363,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         const adGroupRowData = createAdGroupRowData(campaignTitle, adGroupTitle, "Active", "Active", campaign)
         masterSpreadsheet.sheets[0].data[0].rowData.push(adGroupRowData);
         // Ads
-        const adCopyRowData = getAdCopyRowData(adCopySheet.data[0].rowData[i], i);
+        const adCopyRowData = getAdCopyRowData(adCopySheet, account, language, campaign);
         const brandTitle = sheet.properties.title;
         const path = createPath(brandTitle);
         for(let i = 0; i < adCopyRowData.length; i++) {
@@ -419,69 +392,14 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             adCopyRowData[i].values.push({});
           }
 
-          // Log all non-empty values in the row to help find description values
-          console.log("=== ALL NON-EMPTY VALUES IN ROW ===");
-          adCopyRowData[i].values.forEach((value, index) => {
-            if (!isCellEmpty(value)) {
-              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
-              if (val && val.length > 0) {
-                console.log(`Index ${index}: "${val}"`);
-              }
-            }
-          });
+          // Read description values directly from their correct positions (indices 25-29)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
 
-          // Read description values from their correct positions
-          // These should be after Description Line 1 and 2, but before Headline 1
-          /*let description1 = "";
-          let description1Position = "";
-          let description2 = "";
-          let description3 = "";
-          let description4 = "";
-
-          // Try to find description values by looking for specific patterns
-          for (let idx = 0; idx < adCopyRowData[i].values.length; idx++) {
-            const value = adCopyRowData[i].values[idx];
-            if (!isCellEmpty(value)) {
-              const val = value.userEnteredValue.stringValue || value.userEnteredValue.numberValue || '';
-              if (val && val.length > 0) {
-                // Skip if the value contains headline-related text
-                if (val.includes("Headline") || val.includes("Keyword")) {
-                  continue;
-                }
-                
-                // Assign values to descriptions if they're not already set
-                if (!description1) {
-                  description1 = val;
-                } else if (!description1Position && !isNaN(val)) {
-                  description1Position = val;
-                } else if (!description2) {
-                  description2 = val;
-                } else if (!description3) {
-                  description3 = val;
-                } else if (!description4) {
-                  description4 = val;
-                }
-              }
-            }
-          }*/
-
-          // Ensure row is padded up to index 29
-        while (adCopyRowData[i].values.length < 30) {
-          adCopyRowData[i].values.push({});
-        }
-
-        const description1 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
-
-        const description1Position = !isCellEmpty(adCopyRowData[i].values[27])
-          ? (adCopyRowData[i].values[27].userEnteredValue.stringValue || adCopyRowData[i].values[27].userEnteredValue.numberValue || "")
-          : "";
-
-        const description2 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-        const description3 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
-        const description4 = !isCellEmpty(adCopyRowData[i].values[30]) ? adCopyRowData[i].values[30].userEnteredValue.stringValue : "";
-
-
-          // Log what we found
+          // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
             description1: `[${description1}]`,
@@ -491,14 +409,13 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             description4: `[${description4}]`
           });
           
-          // Log the complete row data before processing
-          console.log("=== COMPLETE ROW DATA BEFORE PROCESSING ===");
-          adCopyRowData[i].values.forEach((value, index) => {
-            if (index >= 24 && index <= 30) { // Focus on description columns and surrounding values
-              const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-              console.log(`Index ${index}: "${val}" (${value ? 'has value' : 'empty'})`);
-            }
-          });
+          // Log the complete row data for the description columns
+          console.log("=== DESCRIPTION COLUMNS DATA ===");
+          for (let idx = 25; idx <= 29; idx++) {
+            const value = adCopyRowData[i].values[idx];
+            const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+            console.log(`Index ${idx}: "${val}" (${!isCellEmpty(value) ? 'has value' : 'empty'})`);
+          }
           
           const adRowValues = [
             campaign, account, language, campaign, labels, adType, status,
@@ -558,13 +475,8 @@ function createPath(brandTitle) {
 }
 
 function isCellEmpty(cell) {
-  return (
-    !cell ||
-    !cell.userEnteredValue ||
-    (typeof cell.userEnteredValue.stringValue === "undefined" && typeof cell.userEnteredValue.numberValue === "undefined")
-  );
+  return typeof cell === "undefined" || !cell.hasOwnProperty('userEnteredValue')
 }
-
 
 /**potentially hazasrdous */
 function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, campaignType) {
