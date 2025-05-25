@@ -65,76 +65,97 @@ function readManagerSelectData() {
  * Create Account buildouts on Click 
  */
 async function handleAccountBuildoutClick(e) {
-  // Always set the access token before any Sheets API call
-  if (accessToken) {
-    gapi.client.setToken({ access_token: accessToken });
-  }
-  switch(BUTTON_STATE) {
-    case "GET_MANAGER_DATA":
-      updateButtonState("")
+  try {
+    // Check if we need to refresh the token
+    if (!accessToken || isTokenExpired()) {
+      await refreshToken();
+    }
 
-      const managerFormData = readAccountBuildoutData();
-      const managerDataSpreadsheet = await getSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
-      const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
-      
-      const managerHtml = createManagerHtml(managers)
-      document.getElementById("accounts_form").innerHTML = managerHtml;
-     
-      BUTTON_STATE = "GET_DATA";
-      updateButtonState(BUTTON_STATE)
+    // Always set the access token before any Sheets API call
+    if (accessToken) {
+      gapi.client.setToken({ access_token: accessToken });
+    } else {
+      throw new Error('No access token available');
+    }
 
-      break;
-    case "GET_DATA":
-      updateButtonState("");
-      const formData = readAccountBuildoutData();
+    switch(BUTTON_STATE) {
+      case "GET_MANAGER_DATA":
+        updateButtonState("")
 
-      const manager = readManagerSelectData();
-      MANAGER = manager;
-      const dataSpreadsheet = await getSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
-      const managerSheet = getManagerSheet(dataSpreadsheet, manager)
-      ACCOUNTS = getAccountsFromManagerSheet(managerSheet)
-      
-      const accounts = ACCOUNTS;
+        const managerFormData = readAccountBuildoutData();
+        const managerDataSpreadsheet = await getSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
+        const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
+        
+        const managerHtml = createManagerHtml(managers)
+        document.getElementById("accounts_form").innerHTML = managerHtml;
+       
+        BUTTON_STATE = "GET_DATA";
+        updateButtonState(BUTTON_STATE)
 
-      const accountHtml = createAccountHtml(accounts)
-      document.getElementById("accounts_form").innerHTML = accountHtml;
-      BUTTON_STATE = "CREATE";
-      updateButtonState(BUTTON_STATE)
-      break;
-    
-    case "CREATE":
-      updateButtonState("")
-      const selectedAccounts = readAccountCheckBoxData();
-      
-      if(selectedAccounts.length === 0) {
-        alert("Please select at least one account.")
-        updateButtonState(BUTTON_STATE);
         break;
-      }
+      case "GET_DATA":
+        updateButtonState("");
+        const formData = readAccountBuildoutData();
+
+        const manager = readManagerSelectData();
+        MANAGER = manager;
+        const dataSpreadsheet = await getSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
+        const managerSheet = getManagerSheet(dataSpreadsheet, manager)
+        ACCOUNTS = getAccountsFromManagerSheet(managerSheet)
+        
+        const accounts = ACCOUNTS;
+
+        const accountHtml = createAccountHtml(accounts)
+        document.getElementById("accounts_form").innerHTML = accountHtml;
+        BUTTON_STATE = "CREATE";
+        updateButtonState(BUTTON_STATE)
+        break;
       
-      const formDataCreate = readAccountBuildoutData();
-      const brandBuildoutSpreadsheet = await getSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
-      const accountDataSpreadsheetCreate = await getSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
-      
-      try {
-        const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
-        if (newSheetUrl) {
-          window.open(newSheetUrl, '_blank');
+      case "CREATE":
+        updateButtonState("")
+        const selectedAccounts = readAccountCheckBoxData();
+        
+        if(selectedAccounts.length === 0) {
+          alert("Please select at least one account.")
+          updateButtonState(BUTTON_STATE);
+          break;
         }
-      } catch (e) {
-        console.error("Error in processRequest:", e);
-        alert("An error occurred: " + (e.message || e));
-        // Optionally: signoutButton.onclick();
-      }
+        
+        const formDataCreate = readAccountBuildoutData();
+        const brandBuildoutSpreadsheet = await getSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
+        const accountDataSpreadsheetCreate = await getSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
+        
+        try {
+          const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
+          if (newSheetUrl) {
+            window.open(newSheetUrl, '_blank');
+          }
+        } catch (e) {
+          console.error("Error in processRequest:", e);
+          alert("An error occurred: " + (e.message || e));
+          // Optionally: signoutButton.onclick();
+        }
 
-      BUTTON_STATE = "GET_DATA";
-      updateButtonState(BUTTON_STATE);
-      document.getElementById("accounts_form").innerHTML = "";
-      ACCOUNTS = [];
-    break;
+        BUTTON_STATE = "GET_DATA";
+        updateButtonState(BUTTON_STATE);
+        document.getElementById("accounts_form").innerHTML = "";
+        ACCOUNTS = [];
+      break;
 
-    default:
-      console.log("")
+      default:
+        console.log("")
+    }
+  } catch (error) {
+    console.error("Error in handleAccountBuildoutClick:", error);
+    if (error.status === 401 || error.status === 403 || 
+        (error.result && error.result.error && 
+         (error.result.error.code === 401 || error.result.error.code === 403))) {
+      // Token expired or invalid, request new token
+      await refreshToken();
+      // Retry the operation
+      return handleAccountBuildoutClick(e);
+    }
+    throw error;
   }
 }
 
@@ -215,28 +236,46 @@ function initGapiClient() {
 }
 
 window.onload = function() {
+  // Initialize Google Sign-In
   google.accounts.id.initialize({
     client_id: CLIENT_ID,
     callback: handleCredentialResponse,
     ux_mode: 'popup',
-    auto_select: false
+    auto_select: false,
+    cancel_on_tap_outside: false
   });
+
+  // Render the sign-in button
   google.accounts.id.renderButton(
     document.getElementById('g_id_signin'),
-    { theme: 'outline', size: 'large' }
+    { 
+      theme: 'outline', 
+      size: 'large',
+      type: 'standard',
+      text: 'signin_with',
+      shape: 'rectangular'
+    }
   );
-  google.accounts.id.prompt();
 
   // Initialize the token client for OAuth2
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive',
-    callback: (tokenResponse) => {
-      accessToken = tokenResponse.access_token;
-      gapi.client.setToken({ access_token: accessToken });
-      gapi.load('client', initGapiClient);
+    callback: async (tokenResponse) => {
+      if (tokenResponse && tokenResponse.access_token) {
+        accessToken = tokenResponse.access_token;
+        gapi.client.setToken({ access_token: accessToken });
+        try {
+          await gapi.load('client', initGapiClient);
+        } catch (error) {
+          console.error("Error loading GAPI client:", error);
+        }
+      }
     },
   });
+
+  // Load the GAPI client
+  gapi.load('client', initGapiClient);
 };
 
 // Call this function when you want to request Sheets/Drive access
@@ -245,36 +284,37 @@ function requestSheetsAccess() {
 }
 
 accountBuildoutButton.onclick = async function() {
-  if (!accessToken) {
-    requestSheetsAccess();
-    return;
-  }
-  // Ensure gapi.client is loaded and initialized before setting the token
-  if (!gapi.client || !gapi.client.setToken) {
-    gapi.load('client', () => {
-      gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: DISCOVERY_DOCS,
-      }).then(function () {
-        gapi.client.setToken({ access_token: accessToken });
-        handleAccountBuildoutClick();
-      }, function(error) {
-        console.error("Google API client init error:", error);
-      });
-    });
-    return;
-  }
-  gapi.client.setToken({ access_token: accessToken });
   try {
-    await handleAccountBuildoutClick();
-  } catch (e) {
-    if (e.status === 403 || (e.result && e.result.error && e.result.error.code === 403)) {
-      // If a 403 (PERMISSION_DENIED) is returned, re-request the token and re-try (after a small delay)
-      requestSheetsAccess();
-      setTimeout(() => { if (accessToken) handleAccountBuildoutClick(); }, 500);
-    } else {
-      console.error("Error in handleAccountBuildoutClick:", e);
+    if (!accessToken || isTokenExpired()) {
+      await refreshToken();
     }
+    
+    // Ensure gapi.client is loaded and initialized
+    if (!gapi.client || !gapi.client.setToken) {
+      await new Promise((resolve, reject) => {
+        gapi.load('client', () => {
+          gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: DISCOVERY_DOCS,
+          }).then(() => {
+            gapi.client.setToken({ access_token: accessToken });
+            resolve();
+          }).catch(reject);
+        });
+      });
+    }
+
+    await handleAccountBuildoutClick();
+  } catch (error) {
+    console.error("Error in account buildout button click:", error);
+    if (error.status === 401 || error.status === 403 || 
+        (error.result && error.result.error && 
+         (error.result.error.code === 401 || error.result.error.code === 403))) {
+      // Token expired or invalid, request new token and retry
+      await refreshToken();
+      return accountBuildoutButton.onclick();
+    }
+    alert('An error occurred. Please try again or refresh the page.');
   }
 };
 
@@ -287,4 +327,36 @@ function resetUIState() {
   BUTTON_STATE = "GET_MANAGER_DATA";
   updateButtonState(BUTTON_STATE);
   ACCOUNTS = [];
+}
+
+// Add token expiration check
+function isTokenExpired() {
+  if (!accessToken) return true;
+  try {
+    const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
+    return tokenData.exp * 1000 < Date.now();
+  } catch (e) {
+    return true;
+  }
+}
+
+// Add token refresh function
+async function refreshToken() {
+  return new Promise((resolve, reject) => {
+    tokenClient.requestAccessToken({
+      prompt: 'consent'
+    });
+    // Set up a listener for the token response
+    const tokenListener = (tokenResponse) => {
+      if (tokenResponse && tokenResponse.access_token) {
+        accessToken = tokenResponse.access_token;
+        gapi.client.setToken({ access_token: accessToken });
+        resolve();
+      } else {
+        reject(new Error('Failed to refresh token'));
+      }
+    };
+    // Add the listener
+    tokenClient.callback = tokenListener;
+  });
 }
