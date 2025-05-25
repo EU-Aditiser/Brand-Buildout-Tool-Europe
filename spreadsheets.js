@@ -491,12 +491,31 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           })));
           
           const adRowValues = [
-            campaign, account, language, campaign, labels, adType, status,
-            descriptionLine1, descriptionLine2,
-            headlines[0], headline1Position, // Headline 1 and its position
-            ...headlines.slice(1), // Headline 2-15
-            description1, description2, description3, description4, // Description 1-4
-            description1Position // Description 1 position comes last
+            campaign, 
+            account, 
+            language, 
+            campaign, 
+            labels, 
+            adType, 
+            status,
+            descriptionLine1, 
+            descriptionLine2,
+            headlines[0], 
+            headline1Position,
+            headlines[1], // headline 2
+            headlines[2], // headline 3
+            path, // path
+            headlines[3], // headline 4
+            headlines[4], // headline 5
+            headlines[5], // headline 6
+            headlines[6], // headline 7
+            description1, // description 1
+            description1Position, // description 1 position
+            description2, // description 2
+            description3, // description 3
+            description4, // description 4
+            "", // max cpc
+            "", // flexible reach
           ];
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
