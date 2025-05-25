@@ -358,7 +358,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     "Campaign", "Account", "Language", "Campaign Type", "Labels", "Ad type", "Status", 
     "Description Line 1", "Description Line 2",
     "Headline 1", "Headline 1 position",
-    "Headline 2", "Headline 3", "Path", "Headline 4", "Headline 5", "Headline 6", "Headline 7", 
+    "Headline 2", "Headline 3", "Path", "Headline 4", "Headline 5", "Headline 6", "Headline 7", "Headline 8", "Headline 9", "Headline 10", "Headline 11", "Headline 12", "Headline 13", "Headline 14", "Headline 15",
     "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
   ];
   
@@ -511,6 +511,14 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             headlines[4], // headline 5
             headlines[5], // headline 6
             headlines[6], // headline 7
+            headlines[7],  // Headline 8
+            headlines[8],  // Headline 9
+            headlines[9],  // Headline 10
+            headlines[10], // Headline 11
+            headlines[11], // Headline 12
+            headlines[12], // Headline 13
+            headlines[13], // Headline 14
+            headlines[14], // Headline 15 
             descriptions[0], // description 1
             description1Position, // description 1 position
             descriptions[1], // description 2
