@@ -345,7 +345,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   // Log the column mapping for verification
   console.log("=== COLUMN MAPPING ===");
   console.log("Description columns are at:");
-  console.log("Description 1: Column X (index 23)");
+  console.log("Description 1: Column Z (index 25)");
   console.log("Description 2: Column AA (index 26)");
   console.log("Description 3: Column AB (index 27)");
   console.log("Description 4: Column AC (index 28)");
@@ -438,8 +438,8 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             adCopyRowData[i].values.push({});
           }
 
-          // Read description values from their correct positions (X through AD)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : ""; // Column X
+          // Read description values from their correct positions (Z through AD)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : ""; // Column Z
           const description2 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : ""; // Column AA
           const description3 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : ""; // Column AB
           const description4 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : ""; // Column AC
@@ -448,7 +448,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
-            description1: `[${description1}] (Column X)`,
+            description1: `[${description1}] (Column Z)`,
             description2: `[${description2}] (Column AA)`,
             description3: `[${description3}] (Column AB)`,
             description4: `[${description4}] (Column AC)`,
@@ -458,7 +458,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           // Log the complete row data for the description columns
           console.log("=== DESCRIPTION COLUMNS DATA ===");
           const descriptionColumns = [
-            { index: 23, name: 'X (Description 1)' },
+            { index: 25, name: 'Z (Description 1)' },
             { index: 26, name: 'AA (Description 2)' },
             { index: 27, name: 'AB (Description 3)' },
             { index: 28, name: 'AC (Description 4)' },
