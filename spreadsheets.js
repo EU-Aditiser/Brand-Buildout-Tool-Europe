@@ -347,11 +347,11 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   // Log the column mapping for verification
   console.log("=== COLUMN MAPPING ===");
   console.log("Description columns are at:");
-  console.log("Description 1: Column W (index 22)");
-  console.log("Description 2: Column X (index 23)");
-  console.log("Description 3: Column Y (index 24)");
-  console.log("Description 4: Column Z (index 25)");
-  console.log("Description 1 position: Column AA (index 26)");
+  console.log("Description 1: Column V (index 21)");
+  console.log("Description 2: Column W (index 22)");
+  console.log("Description 3: Column X (index 23)");
+  console.log("Description 4: Column Y (index 24)");
+  console.log("Description 1 position: Column Z (index 25)");
 
   // Header row with exact columns as specified - updated order to match input file
   const rawHeaderRow = [
@@ -434,36 +434,36 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
           const path1 = path;
           
-          // Pad the row to ensure we can safely read all columns up to index 26 (Column AA)
-          while (adCopyRowData[i].values.length < 27) {
+          // Pad the row to ensure we can safely read all columns up to index 25 (Column Z)
+          while (adCopyRowData[i].values.length < 26) {
             adCopyRowData[i].values.push({});
           }
 
-          // Read description values from their correct positions (W through AA)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : ""; // Column W
-          const description2 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : ""; // Column X
-          const description3 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : ""; // Column Y
-          const description4 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : ""; // Column Z
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ? (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : ""; // Column AA
+          // Read description values from their correct positions (V through Z)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : ""; // Column V
+          const description2 = !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : ""; // Column W
+          const description3 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : ""; // Column X
+          const description4 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : ""; // Column Y
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[25]) ? (adCopyRowData[i].values[25].userEnteredValue.stringValue || adCopyRowData[i].values[25].userEnteredValue.numberValue || "") : ""; // Column Z
 
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
-            description1: `[${description1}] (Column W)`,
-            description2: `[${description2}] (Column X)`,
-            description3: `[${description3}] (Column Y)`,
-            description4: `[${description4}] (Column Z)`,
-            description1Position: `[${description1Position}] (Column AA)`
+            description1: `[${description1}] (Column V)`,
+            description2: `[${description2}] (Column W)`,
+            description3: `[${description3}] (Column X)`,
+            description4: `[${description4}] (Column Y)`,
+            description1Position: `[${description1Position}] (Column Z)`
           });
           
           // Log the complete row data for the description columns
           console.log("=== DESCRIPTION COLUMNS DATA ===");
           const descriptionColumns = [
-            { index: 22, name: 'W (Description 1)' },
-            { index: 23, name: 'X (Description 2)' },
-            { index: 24, name: 'Y (Description 3)' },
-            { index: 25, name: 'Z (Description 4)' },
-            { index: 26, name: 'AA (Description 1 position)' }
+            { index: 21, name: 'V (Description 1)' },
+            { index: 22, name: 'W (Description 2)' },
+            { index: 23, name: 'X (Description 3)' },
+            { index: 24, name: 'Y (Description 4)' },
+            { index: 25, name: 'Z (Description 1 position)' }
           ];
           
           // Log the raw data structure for each description column
