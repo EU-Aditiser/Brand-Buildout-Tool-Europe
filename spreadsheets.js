@@ -117,51 +117,78 @@ function rowIsEmpty(row) {
   return true;
 }
 
-function getAdCopyRowData(sheet, account, language, type) {
-  let adCopyRows = [];
-  const rows = sheet.data[0].rowData;
-  
-  // Log the complete structure of the first row with detailed information
-  if (rows && rows.length > 0 && rows[0].values) {
-    console.log("=== COMPLETE FIRST ROW STRUCTURE WITH DETAILS ===");
-    rows[0].values.forEach((value, index) => {
-      const header = value?.userEnteredValue?.stringValue || '';
-      console.log(`Column ${index}: "${header}"`, {
-        hasValue: !!value,
-        hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
-        valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none'
-      });
-    });
-  }
-  
-  // Log the complete structure of the first data row with detailed information
-  if (rows && rows.length > 1) {
-    console.log("=== COMPLETE FIRST DATA ROW WITH DETAILS ===");
-    const firstDataRow = rows[1];
-    if (firstDataRow && firstDataRow.values) {
-      firstDataRow.values.forEach((value, index) => {
-        const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-        console.log(`Index ${index}: "${val}"`, {
-          hasValue: !!value,
-          hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
-          valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none',
-          rawValue: value
-        });
-      });
+function getAdCopyRowData(row, rowIndex) {
+  try {
+    // Ensure row has enough columns for reading
+    while (row.length < 30) {
+      row.push({ userEnteredValue: { stringValue: '' } });
     }
-  }
-  
-  for(let i = 0; i < rows.length; i++) {
-    if(!rowIsEmpty(rows[i]) && rows[i].values[1].hasOwnProperty('userEnteredValue')) {
-      const adAccount = rows[i].values[1].userEnteredValue.stringValue;
-      const adLanguage = rows[i].values[2].userEnteredValue.stringValue;
-      const adType = rows[i].values[3].userEnteredValue.stringValue;
-      if(adAccount === account && adLanguage === language && adType === type)  {
-        adCopyRows.push(rows[i])
+
+    // Log all non-empty values to help identify where descriptions are
+    console.log('\nALL NON-EMPTY VALUES IN ROW:');
+    row.forEach((cell, index) => {
+      if (cell?.userEnteredValue?.stringValue?.trim()) {
+        console.log(`Column ${index}: "${cell.userEnteredValue.stringValue}"`);
       }
-    } 
+    });
+
+    // Read description values from their correct positions (first few columns)
+    // Based on the input file structure:
+    // Description 1 (index 0)
+    // Description 1 position (index 1)
+    // Description 2 (index 2)
+    // Description 3 (index 3)
+    // Description 4 (index 4)
+    const descriptions = [];
+    const descriptionIndices = [0, 2, 3, 4]; // Skip index 1 as it's the position column
+    let descriptionCount = 0;
+
+    for (const index of descriptionIndices) {
+      const value = row[index]?.userEnteredValue?.stringValue?.trim() || '';
+      if (value && !value.includes('Headline') && !value.includes('Description Line')) {
+        descriptions.push(value);
+        descriptionCount++;
+        if (descriptionCount >= 4) break; // We only need 4 descriptions
+      }
+    }
+
+    // Log what we found
+    console.log('\nEXTRACTED DESCRIPTION VALUES:');
+    descriptions.forEach((desc, i) => {
+      console.log(`Description ${i + 1}: "${desc}"`);
+    });
+
+    // Read headline values starting after the description columns
+    const headlines = [];
+    let headlineCount = 0;
+    // Start reading headlines from index 5 (after description columns)
+    for (let i = 5; i < row.length && headlineCount < 15; i++) {
+      const value = row[i]?.userEnteredValue?.stringValue?.trim() || '';
+      if (value && !value.includes('Description')) {
+        headlines.push(value);
+        headlineCount++;
+      }
+    }
+
+    // Log what we found
+    console.log('\nEXTRACTED HEADLINE VALUES:');
+    headlines.forEach((headline, i) => {
+      console.log(`Headline ${i + 1}: "${headline}"`);
+    });
+
+    // Get description position from index 1
+    const description1Position = row[1]?.userEnteredValue?.stringValue?.trim() || '-';
+
+    return {
+      rowNumber: rowIndex + 1,
+      headlines: headlines.slice(0, 15), // Ensure we only take up to 15 headlines
+      descriptions: descriptions.slice(0, 4), // Ensure we only take up to 4 descriptions
+      description1Position: description1Position
+    };
+  } catch (error) {
+    console.error(`Error processing row ${rowIndex + 1}:`, error);
+    return null;
   }
-  return adCopyRows;
 }
 
 async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accounts) {
@@ -363,7 +390,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         const adGroupRowData = createAdGroupRowData(campaignTitle, adGroupTitle, "Active", "Active", campaign)
         masterSpreadsheet.sheets[0].data[0].rowData.push(adGroupRowData);
         // Ads
-        const adCopyRowData = getAdCopyRowData(adCopySheet, account, language, campaign);
+        const adCopyRowData = getAdCopyRowData(adCopySheet.data[0].rowData[i], i);
         const brandTitle = sheet.properties.title;
         const path = createPath(brandTitle);
         for(let i = 0; i < adCopyRowData.length; i++) {
