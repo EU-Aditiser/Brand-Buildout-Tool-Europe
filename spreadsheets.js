@@ -462,6 +462,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           handleFieldLengthLimits(adRow);
         
           masterSpreadsheet.sheets[0].data[0].rowData.push(adRow);
+          console.log("Row created:", adRow);
         }
 
         //Keywords  
@@ -704,6 +705,7 @@ function copyRowData(row) {
 }
 //Takes an array of Row Data
 function createRowData(values){
+  console.log("createRowData received values:", values);
   var rowData = {
     values: []
   } 
@@ -738,6 +740,7 @@ function createRowData(values){
     
   }
 
+  console.log("Row created:", rowData);
   return rowData;
 }
 
