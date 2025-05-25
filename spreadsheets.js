@@ -119,10 +119,17 @@ function rowIsEmpty(row) {
 
 function getAdCopyRowData(sheet, account, language, type) {
   let adCopyRows = [];
+  
+  // Add null checks for sheet and data
+  if (!sheet || !sheet.data || !sheet.data[0] || !sheet.data[0].rowData) {
+    console.error("Invalid sheet data structure:", sheet);
+    return adCopyRows;
+  }
+  
   const rows = sheet.data[0].rowData;
   
   // Log the complete structure of the first row with detailed information
-  if (rows && rows.length > 0 && rows[0].values) {
+  if (rows && rows.length > 0 && rows[0] && rows[0].values) {
     console.log("=== COMPLETE FIRST ROW STRUCTURE WITH DETAILS ===");
     rows[0].values.forEach((value, index) => {
       const header = value?.userEnteredValue?.stringValue || '';
@@ -135,32 +142,43 @@ function getAdCopyRowData(sheet, account, language, type) {
   }
   
   // Log the complete structure of the first data row with detailed information
-  if (rows && rows.length > 1) {
+  if (rows && rows.length > 1 && rows[1] && rows[1].values) {
     console.log("=== COMPLETE FIRST DATA ROW WITH DETAILS ===");
     const firstDataRow = rows[1];
-    if (firstDataRow && firstDataRow.values) {
-      firstDataRow.values.forEach((value, index) => {
-        const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
-        console.log(`Index ${index}: "${val}"`, {
-          hasValue: !!value,
-          hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
-          valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none',
-          rawValue: value
-        });
+    firstDataRow.values.forEach((value, index) => {
+      const val = value?.userEnteredValue?.stringValue || value?.userEnteredValue?.numberValue || '';
+      console.log(`Index ${index}: "${val}"`, {
+        hasValue: !!value,
+        hasUserEnteredValue: value?.hasOwnProperty('userEnteredValue'),
+        valueType: value?.userEnteredValue ? typeof value.userEnteredValue : 'none',
+        rawValue: value
       });
+    });
+  }
+  
+  // Process rows with proper null checks
+  for(let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row.values || row.values.length < 2) {
+      console.warn(`Skipping invalid row at index ${i}`);
+      continue;
+    }
+    
+    try {
+      if(!rowIsEmpty(row) && row.values[1] && row.values[1].hasOwnProperty('userEnteredValue')) {
+        const adAccount = row.values[1].userEnteredValue.stringValue;
+        const adLanguage = row.values[2]?.userEnteredValue?.stringValue || '';
+        const adType = row.values[3]?.userEnteredValue?.stringValue || '';
+        
+        if(adAccount === account && adLanguage === language && adType === type) {
+          adCopyRows.push(row);
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing row ${i}:`, error);
     }
   }
   
-  for(let i = 0; i < rows.length; i++) {
-    if(!rowIsEmpty(rows[i]) && rows[i].values[1].hasOwnProperty('userEnteredValue')) {
-      const adAccount = rows[i].values[1].userEnteredValue.stringValue;
-      const adLanguage = rows[i].values[2].userEnteredValue.stringValue;
-      const adType = rows[i].values[3].userEnteredValue.stringValue;
-      if(adAccount === account && adLanguage === language && adType === type)  {
-        adCopyRows.push(rows[i])
-      }
-    } 
-  }
   return adCopyRows;
 }
 
@@ -318,6 +336,12 @@ function getThirdLevelDomainFromSheet(sheet, account) {
 }
 
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
+  // Add null checks for input parameters
+  if (!keywordSpreadsheet || !adCopySheet || !urlDataSheet || !account) {
+    console.error("Missing required parameters:", { keywordSpreadsheet, adCopySheet, urlDataSheet, account });
+    throw new Error("Missing required parameters for spreadsheet creation");
+  }
+
   // Header row with exact columns as specified
   const rawHeaderRow = [
     "Campaign", "Account", "Language", "Campaign Type", "Labels", "Ad type", "Status", 
@@ -328,9 +352,22 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     "Headline 14", "Headline 15",
     "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
   ];
-  let masterSpreadsheet = createSpreadSheet(account+ " Buildout", rawHeaderRow);
+  
+  let masterSpreadsheet = createSpreadSheet(account + " Buildout", rawHeaderRow);
+  
+  // Add null checks for sheet data
+  if (!adCopySheet.data || !adCopySheet.data[0] || !adCopySheet.data[0].rowData) {
+    console.error("Invalid adCopySheet data structure");
+    throw new Error("Invalid ad copy sheet data structure");
+  }
+  
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
   const campaigns = getAccountCampaignsFromSheet(adCopySheet, account);
+  
+  if (!languages.length || !campaigns.length) {
+    console.warn("No languages or campaigns found for account:", account);
+    return masterSpreadsheet;
+  }
 
   for (let i = 0; i < keywordSpreadsheet.sheets.length; i++) {
     for (let j = 0; j < languages.length; j++) {
