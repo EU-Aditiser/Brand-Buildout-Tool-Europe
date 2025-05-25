@@ -396,6 +396,9 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const descriptions = [description1, description2, description3, description4];
           console.log("descriptions:", descriptions);
 
+          // Debug: log the entire row values for this ad copy row
+          console.log("adCopyRowData[i].values:", adCopyRowData[i].values.map(v => v && v.userEnteredValue ? v.userEnteredValue.stringValue : ''));
+
           // Headline 1-15 handling
           let headlines = [headline1];
           for (let h = 0; h < 14; h++) {
