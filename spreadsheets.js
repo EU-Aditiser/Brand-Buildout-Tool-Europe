@@ -377,20 +377,20 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const headline5 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
           const headline6 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
           const headline7 = !isCellEmpty(adCopyRowData[i].values[16]) ? adCopyRowData[i].values[16].userEnteredValue.stringValue : "";
-          const description1 = !isCellEmpty(adCopyRowData[i].values[17]) ? adCopyRowData[i].values[17].userEnteredValue.stringValue : "";
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
           let description1Position;
-          if(!isCellEmpty(adCopyRowData[i].values[18])) {
-            description1Position = adCopyRowData[i].values[18].userEnteredValue.stringValue;
+          if(!isCellEmpty(adCopyRowData[i].values[26])) {
+            description1Position = adCopyRowData[i].values[26].userEnteredValue.stringValue;
             
             if(typeof description1Position === "undefined") {
-              description1Position = adCopyRowData[i].values[18].userEnteredValue.numberValue;
+              description1Position = adCopyRowData[i].values[26].userEnteredValue.numberValue;
             }
           } else {
             description1Position = "";
           }
-          const description2 = !isCellEmpty(adCopyRowData[i].values[19]) ? adCopyRowData[i].values[19].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[20]) ? adCopyRowData[i].values[20].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
           const descriptions = [description1, description2, description3, description4];
 
           // Headline 1-15 handling
