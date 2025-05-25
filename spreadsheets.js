@@ -717,12 +717,29 @@ function batchUpdate(spreadsheetId, requests) {
 }
 function copyRowData(row) {
   let values = [];
+  console.log("=== COPYING ROW DATA ===");
+  console.log("Original row length:", row.values.length);
+  console.log("Original row values:", row.values.map((v, idx) => ({
+    index: idx,
+    column: toLetters(idx + 1),
+    hasUserEnteredValue: v?.hasOwnProperty('userEnteredValue'),
+    value: v?.userEnteredValue?.stringValue || v?.userEnteredValue?.numberValue || ''
+  })));
+  
   for(let i = 0; i < row.values.length; i++) {
     if(row.values[i].hasOwnProperty("userEnteredValue")) {
       values.push(row.values[i].userEnteredValue.stringValue);
+    } else {
+      values.push(""); // Push empty string for columns without userEnteredValue
     }
   }
-
+  
+  console.log("Copied values:", values.map((v, idx) => ({
+    index: idx,
+    column: toLetters(idx + 1),
+    value: v
+  })));
+  
   return createRowData(values);
 }
 //Takes an array of Row Data
