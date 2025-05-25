@@ -306,6 +306,8 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4",
     "Max CPC", "Flexible Reach"
   ];
+  // Define adCopyHeaderRow at the top so it is available everywhere
+  const adCopyHeaderRow = adCopySheet.data[0].rowData[0].values.map(cell => cell.userEnteredValue ? cell.userEnteredValue.stringValue : "");
   
   let masterSpreadsheet = createSpreadSheet(account + " Buildout", rawHeaderRow);
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
@@ -393,7 +395,6 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const headline5 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
           const headline6 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
           const headline7 = !isCellEmpty(adCopyRowData[i].values[16]) ? adCopyRowData[i].values[16].userEnteredValue.stringValue : "";
-          const adCopyHeaderRow = adCopySheet.data[0].rowData[0].values.map(cell => cell.userEnteredValue ? cell.userEnteredValue.stringValue : "");
           const descHeaders = [
             "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
           ];
