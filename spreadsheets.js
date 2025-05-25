@@ -399,8 +399,10 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           ];
           const descColIndexes = getColumnIndexesByHeader(adCopyHeaderRow, descHeaders);
           const description1 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1"]]) ? adCopyRowData[i].values[descColIndexes["Description 1"]].userEnteredValue.stringValue : "";
+          console.log(`Row ${i}: Description 1 =`, description1);
           const description1Position = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 1 position"]]) ? adCopyRowData[i].values[descColIndexes["Description 1 position"]].userEnteredValue.stringValue : "";
           const description2 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 2"]]) ? adCopyRowData[i].values[descColIndexes["Description 2"]].userEnteredValue.stringValue : "";
+          console.log(`Row ${i}: Description 2 =`, description2);
           const description3 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 3"]]) ? adCopyRowData[i].values[descColIndexes["Description 3"]].userEnteredValue.stringValue : "";
           const description4 = !isCellEmpty(adCopyRowData[i].values[descColIndexes["Description 4"]]) ? adCopyRowData[i].values[descColIndexes["Description 4"]].userEnteredValue.stringValue : "";
           const descriptions = [description1, description2, description3, description4];
@@ -475,6 +477,12 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           } 
 
           masterSpreadsheet.sheets[0].data[0].rowData.push(keywordRowData[i]);
+        }
+
+        // After extracting adCopyHeaderRow and before processing adCopyRowData:
+        console.log("AD COPY HEADER ROW:", adCopyHeaderRow);
+        if (adCopyRowData.length > 0) {
+          console.log("FIRST AD COPY DATA ROW:", adCopyRowData[0].values.map(v => v && v.userEnteredValue ? v.userEnteredValue.stringValue : ''));
         }
       }
     }
