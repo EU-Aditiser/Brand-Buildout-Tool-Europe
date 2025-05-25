@@ -158,7 +158,7 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
     window.open(url, '_blank');
   }
 
-  location.reload()
+  // location.reload()
 }
 
 function getUrlDataSheet(accountDataSpreadsheet) {
@@ -382,6 +382,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           let description1Position;
           if(!isCellEmpty(adCopyRowData[i].values[26])) {
             description1Position = adCopyRowData[i].values[26].userEnteredValue.stringValue;
+            console.log("description1Position:",description1Position);
             if(typeof description1Position === "undefined") {
               description1Position = adCopyRowData[i].values[26].userEnteredValue.numberValue;
             }
@@ -441,6 +442,10 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             campaignType === "Retention" ? "Genders;Ages;Parental status;Household incomes" :
             "Genders;Ages;Parental status;Household incomes" // flexible reach - in its own column
           ];
+          // Debug logs to check header and row alignment
+          console.log("Header:", rawHeaderRow);
+          console.log("Row:", adRowValues);
+          console.log("Header length:", rawHeaderRow.length, "Row length:", adRowValues.length);
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
         
