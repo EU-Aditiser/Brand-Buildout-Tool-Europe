@@ -390,8 +390,10 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
           console.log("description2:", description2);
           const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          console.log("description3:", description3);
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";console.log("description4:", description4);
           const descriptions = [description1, description2, description3, description4];
+          console.log("descriptions:", descriptions);
 
           // Headline 1-15 handling
           let headlines = [headline1];
