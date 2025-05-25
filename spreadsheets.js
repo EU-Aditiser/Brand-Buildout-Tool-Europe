@@ -434,20 +434,21 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const path1 = path;
           
           // Pad the row to ensure we can safely read all columns up to index 25 (Column Z)
-          while (adCopyRowData[i].values.length < 29) {
+          
+          while (adCopyRowData[i].values.length < 30) {
             adCopyRowData[i].values.push({});
           }
-
-          // Read description values from their correct positions (V through Z)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : "";
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[25]) ?
-            (adCopyRowData[i].values[25].userEnteredValue.stringValue || adCopyRowData[i].values[25].userEnteredValue.numberValue || "") : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-
+          
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[26]) ?
+            (adCopyRowData[i].values[26].userEnteredValue.stringValue || adCopyRowData[i].values[26].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          
           const descriptions = [description1, description2, description3, description4];
 
+          
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
