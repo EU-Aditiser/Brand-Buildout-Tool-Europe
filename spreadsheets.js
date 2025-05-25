@@ -132,15 +132,15 @@ function getAdCopyRowData(row, rowIndex) {
       }
     });
 
-    // Read description values from their correct positions (first few columns)
+    // Read description values from their correct positions (columns 25-29)
     // Based on the input file structure:
-    // Description 1 (index 0)
-    // Description 1 position (index 1)
-    // Description 2 (index 2)
-    // Description 3 (index 3)
-    // Description 4 (index 4)
+    // Description 1 (index 25)
+    // Description 1 position (index 26)
+    // Description 2 (index 27)
+    // Description 3 (index 28)
+    // Description 4 (index 29)
     const descriptions = [];
-    const descriptionIndices = [0, 2, 3, 4]; // Skip index 1 as it's the position column
+    const descriptionIndices = [25, 27, 28, 29]; // Skip index 26 as it's the position column
     let descriptionCount = 0;
 
     for (const index of descriptionIndices) {
@@ -158,11 +158,11 @@ function getAdCopyRowData(row, rowIndex) {
       console.log(`Description ${i + 1}: "${desc}"`);
     });
 
-    // Read headline values starting after the description columns
+    // Read headline values from their correct positions (columns 9-23)
     const headlines = [];
     let headlineCount = 0;
-    // Start reading headlines from index 5 (after description columns)
-    for (let i = 5; i < row.length && headlineCount < 15; i++) {
+    // Start reading headlines from index 9 (Headline 1) to index 23 (Headline 15)
+    for (let i = 9; i <= 23 && headlineCount < 15; i++) {
       const value = row[i]?.userEnteredValue?.stringValue?.trim() || '';
       if (value && !value.includes('Description')) {
         headlines.push(value);
@@ -176,8 +176,8 @@ function getAdCopyRowData(row, rowIndex) {
       console.log(`Headline ${i + 1}: "${headline}"`);
     });
 
-    // Get description position from index 1
-    const description1Position = row[1]?.userEnteredValue?.stringValue?.trim() || '-';
+    // Get description position from index 26
+    const description1Position = row[26]?.userEnteredValue?.stringValue?.trim() || '-';
 
     return {
       rowNumber: rowIndex + 1,
