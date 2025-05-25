@@ -434,19 +434,19 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const path1 = path;
           
           // Pad the row to ensure we can safely read all columns up to index 25 (Column Z)
-          while (adCopyRowData[i].values.length < 26) {
+          while (adCopyRowData[i].values.length < 29) {
             adCopyRowData[i].values.push({});
           }
 
           // Read description values from their correct positions (V through Z)
-          const descriptions = [
-            !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : "", // Description 1 (V)
-            !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : "", // Description 2 (W)
-            !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : "", // Description 3 (X)
-            !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : "", // Description 4 (Y)
-          ];
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[25]) ? 
-            (adCopyRowData[i].values[25].userEnteredValue.stringValue || adCopyRowData[i].values[25].userEnteredValue.numberValue || "") : ""; // Description 1 position (Z)
+          const description1 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[25]) ?
+            (adCopyRowData[i].values[25].userEnteredValue.stringValue || adCopyRowData[i].values[25].userEnteredValue.numberValue || "") : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[26]) ? adCopyRowData[i].values[26].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+
+          const descriptions = [description1, description2, description3, description4];
 
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
