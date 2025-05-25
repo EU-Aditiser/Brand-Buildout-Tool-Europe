@@ -358,9 +358,8 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     "Campaign", "Account", "Language", "Campaign Type", "Labels", "Ad type", "Status", 
     "Description Line 1", "Description Line 2",
     "Headline 1", "Headline 1 position",
-    "Headline 2", "Headline 3", "Headline 4", "Headline 5", "Headline 6", "Headline 7", 
-    "Headline 8", "Headline 9", "Headline 10", "Headline 11",
-    "Description 1", "Description 2", "Description 3", "Description 4", "Description 1 position"
+    "Headline 2", "Headline 3", "Path", "Headline 4", "Headline 5", "Headline 6", "Headline 7", 
+    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4"
   ];
   
   let masterSpreadsheet = createSpreadSheet(account + " Buildout", rawHeaderRow);
@@ -440,19 +439,22 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           }
 
           // Read description values from their correct positions (V through Z)
-          const description1 = !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : ""; // Column V
-          const description2 = !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : ""; // Column W
-          const description3 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : ""; // Column X
-          const description4 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : ""; // Column Y
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[25]) ? (adCopyRowData[i].values[25].userEnteredValue.stringValue || adCopyRowData[i].values[25].userEnteredValue.numberValue || "") : ""; // Column Z
+          const descriptions = [
+            !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : "", // Description 1 (V)
+            !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : "", // Description 2 (W)
+            !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : "", // Description 3 (X)
+            !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : "", // Description 4 (Y)
+          ];
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[25]) ? 
+            (adCopyRowData[i].values[25].userEnteredValue.stringValue || adCopyRowData[i].values[25].userEnteredValue.numberValue || "") : ""; // Description 1 position (Z)
 
           // Log what we found for verification
           console.log("=== EXTRACTED DESCRIPTION VALUES ===");
           console.log("Description values:", {
-            description1: `[${description1}] (Column V)`,
-            description2: `[${description2}] (Column W)`,
-            description3: `[${description3}] (Column X)`,
-            description4: `[${description4}] (Column Y)`,
+            description1: `[${descriptions[0]}] (Column V)`,
+            description2: `[${descriptions[1]}] (Column W)`,
+            description3: `[${descriptions[2]}] (Column X)`,
+            description4: `[${descriptions[3]}] (Column Y)`,
             description1Position: `[${description1Position}] (Column Z)`
           });
           
@@ -509,13 +511,11 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             headlines[4], // headline 5
             headlines[5], // headline 6
             headlines[6], // headline 7
-            description1, // description 1
+            descriptions[0], // description 1
             description1Position, // description 1 position
-            description2, // description 2
-            description3, // description 3
-            description4, // description 4
-            "", // max cpc
-            "", // flexible reach
+            descriptions[1], // description 2
+            descriptions[2], // description 3
+            descriptions[3] // description 4
           ];
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
