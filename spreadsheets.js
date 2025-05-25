@@ -300,7 +300,12 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     for (let j = 0; j < languages.length; j++) {
       for (let k = 0; k < campaigns.length; k++) {
         const language = languages[j];
-        const campaign = campaigns[k]
+        const campaign = campaigns[k];
+        // Get campaign type from the campaign name
+        const campaignType = campaign.includes("Acquisition") ? "Acquisition" : 
+                           campaign.includes("Retention") ? "Retention" : 
+                           campaign.includes("Broad") ? "Broad" : "Acquisition"; // Default to Acquisition if not specified
+        
         //console.log(account.accountTitle, "Brand: " + i , languages[j], campaigns[k])
         const sheet = keywordSpreadsheet.sheets[i];
         const rawRowData = sheet.data[0].rowData;
@@ -430,7 +435,9 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             descriptions[2], // description 3
             descriptions[3], // description 4
             "0.5", // max cpc
-            campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : "Genders;Ages;Parental status;Household incomes" // flexible reach
+            campaignType === "Acquisition" ? "Audience segments;Genders;Ages;Parental status;Household incomes" : 
+            campaignType === "Retention" ? "Genders;Ages;Parental status;Household incomes" :
+            "Genders;Ages;Parental status;Household incomes" // flexible reach based on campaign type
           ];
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
