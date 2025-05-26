@@ -280,7 +280,12 @@ function getThirdLevelDomainFromSheet(sheet, account) {
 }
 
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
-  const rawHeaderRow = ["Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", "Description Line 1", "Description Line 2", "Headline 1", "Headline 1 position", "Headline 2", "Headline 3", "Path 1", "Headline 4", "Headline 5", "Headline 6", "Headline 7", "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4", "Max CPC", "Flexible Reach"];
+  const rawHeaderRow = [
+    "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", "Description Line 1", "Description Line 2",
+    "Headline 1", "Headline 1 position", "Headline 2", "Headline 3", "Path 1",
+    "Headline 4", "Headline 5", "Headline 6", "Headline 7",
+    "Headline 8", "Headline 9", "Headline 10", "Headline 11", "Headline 12", "Headline 13", "Headline 14", "Headline 15", "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4", "Max CPC", "Flexible Reach"
+  ];
   //adds header row 
   let masterSpreadsheet = createSpreadSheet(account+ " Buildout", rawHeaderRow);
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
@@ -337,21 +342,85 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         const brandTitle = sheet.properties.title;
         const path = createPath(brandTitle);
         
-        
-        
         for (let i = 0; i < adCopyRowData.length; i++) {
-          const adRow = createAdRow(
-            adCopyRowData[i],
-            brandTitle,
-            campaignTitle,
-            adGroupTitle,
-            finalURL,
-            campaign
-          );
-          masterSpreadsheet.sheets[0].data[0].rowData.push(adRow);
-        }
+          const campaign = campaignTitle;
+          const adGroup = adGroupTitle;
         
-
+          const labels = !isCellEmpty(adCopyRowData[i].values[4]) ? adCopyRowData[i].values[4].userEnteredValue.stringValue : "";
+          const adType = !isCellEmpty(adCopyRowData[i].values[5]) ? adCopyRowData[i].values[5].userEnteredValue.stringValue : "";
+          const status = !isCellEmpty(adCopyRowData[i].values[6]) ? adCopyRowData[i].values[6].userEnteredValue.stringValue : "";
+          const descriptionLine1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
+          const descriptionLine2 = !isCellEmpty(adCopyRowData[i].values[8]) ? adCopyRowData[i].values[8].userEnteredValue.stringValue : "";
+        
+          const headline1 = !isCellEmpty(adCopyRowData[i].values[9]) ? createHeadline1(brandTitle, adCopyRowData[i].values[9].userEnteredValue.stringValue) : "";
+          const headline1Position = !isCellEmpty(adCopyRowData[i].values[10])
+            ? (adCopyRowData[i].values[10].userEnteredValue.stringValue ?? adCopyRowData[i].values[10].userEnteredValue.numberValue ?? "")
+            : "";
+        
+          const headline2 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
+          const headline3 = !isCellEmpty(adCopyRowData[i].values[12]) ? adCopyRowData[i].values[12].userEnteredValue.stringValue : "";
+          const headline4 = !isCellEmpty(adCopyRowData[i].values[13]) ? adCopyRowData[i].values[13].userEnteredValue.stringValue : "";
+          const headline5 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
+          const headline6 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
+          const headline7 = !isCellEmpty(adCopyRowData[i].values[16]) ? adCopyRowData[i].values[16].userEnteredValue.stringValue : "";
+          const headline8 = !isCellEmpty(adCopyRowData[i].values[17]) ? adCopyRowData[i].values[17].userEnteredValue.stringValue : "";
+          const headline9 = !isCellEmpty(adCopyRowData[i].values[18]) ? adCopyRowData[i].values[18].userEnteredValue.stringValue : "";
+          const headline10 = !isCellEmpty(adCopyRowData[i].values[19]) ? adCopyRowData[i].values[19].userEnteredValue.stringValue : "";
+          const headline11 = !isCellEmpty(adCopyRowData[i].values[20]) ? adCopyRowData[i].values[20].userEnteredValue.stringValue : "";
+          const headline12 = !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : "";
+          const headline13 = !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : "";
+          const headline14 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : "";
+          const headline15 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : "";
+        
+          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[i].values[26])
+            ? (adCopyRowData[i].values[26].userEnteredValue.stringValue ?? adCopyRowData[i].values[26].userEnteredValue.numberValue ?? "")
+            : "";
+          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+        
+          const adRowValues = [
+            campaign,
+            adGroup,
+            "", "", // keyword, criterion
+            finalURL,
+            labels,
+            adType,
+            status,
+            descriptionLine1,
+            descriptionLine2,
+            headline1,
+            headline1Position,
+            headline2,
+            headline3,
+            path, // still using 'path' as you did before
+            headline4,
+            headline5,
+            headline6,
+            headline7,
+            headline8,
+            headline9,
+            headline10,
+            headline11,
+            headline12,
+            headline13,
+            headline14,
+            headline15,
+            description1,
+            description1Position,
+            description2,
+            description3,
+            description4,
+            "", "" // Max CPC, Flexible reach
+          ];
+        
+          const adRow = createRowData(adRowValues);
+          handleFieldLengthLimits(adRow);
+          masterSpreadsheet.sheets[0].data[0].rowData.push(adRow);
+        }        
+      
+        
         //Keywords  
         // add country specific keyword postfix
         for(let i = 0; i < keywordRowData.length; i++) { 
