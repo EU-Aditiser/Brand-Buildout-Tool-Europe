@@ -1,4 +1,4 @@
-function removeAdTemplates(spreadsheetId, rowData, sheetId) {
+confim the changes"function removeAdTemplates(spreadsheetId, rowData, sheetId) {
   // Remove ad templates
 
   let removeRequests = [];
@@ -385,32 +385,48 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
         
           const adRowValues = [
-            campaignTitle,
-            adGroupTitle,
-            "", // keyword
-            "", // criterion type
+            campaign,
+            adGroup,
+            "", "", // keyword, criterion
             finalURL,
             labels,
             adType,
             status,
             descriptionLine1,
             descriptionLine2,
-            headlines[0], // ✅ Headline 1
-            headline1Position, // ✅ placed right after Headline 1 (index 11)
-            ...headlines.slice(1), // ✅ Headline 2 to 15 (indexes 12 to 25)
+            headline1,
+            headline1Position,
+            headline2,
+            headline3,
+            path, // still using 'path' as you did before
+            headline4,
+            headline5,
+            headline6,
+            headline7,
+            headline8,
+            headline9,
+            headline10,
+            headline11,
+            headline12,
+            headline13,
+            headline14,
+            headline15,
             description1,
             description1Position,
             description2,
             description3,
             description4,
-            "", // Max CPC (index 31, column AG)
-            ""  // Flexible Reach (index 32, column AH)
+            "", // Max CPC
+            "" // flexibleReach
           ];
-          
+        //test to find out the issues
+          for (let i = 0; i < rawHeaderRow.length; i++) {
+            console.log(`Header[${i}]: ${rawHeaderRow[i]} | Value[${i}]: ${adRowValues[i]}`);
+          }
         
-          const adRow = createAdRow(adCopyRowData[i], brandTitle, campaignTitle, adGroupTitle, finalURL, campaign);
+          const adRow = createRowData(adRowValues);
+          handleFieldLengthLimits(adRow);
           masterSpreadsheet.sheets[0].data[0].rowData.push(adRow);
-
         }        
       
         
@@ -550,8 +566,8 @@ async function getSpreadsheetSingleManager(url, manager) {
   await gapi.client.sheets.spreadsheets.get({
     spreadsheetId,
     ranges: [
-      `${manager}!A1:AD150`, //150 row limit imposed
-      `URL Data!A1:D150`
+      ${manager}!A1:AD150, //150 row limit imposed
+      URL Data!A1:D150
     ],
     includeGridData: true                                
   }).then((response) => {
@@ -827,13 +843,13 @@ function getManagerSheet(dataSpreadsheet, manager) {
 }
 
 function createManagerHtml(managers) {
-  let managerHtml = `<select class="form-select" id="manager-select">`;
+  let managerHtml = <select class="form-select" id="manager-select">;
   for (let i = 0; i < managers.length; i++) {        
-    const template = `<option value="${managers[i]}">${managers[i]}</option>`;
+    const template = <option value="${managers[i]}">${managers[i]}</option>;
     managerHtml += template;
   
   }
-  managerHtml += `</select>`;
+  managerHtml += </select>;
 
   return managerHtml
 }
@@ -845,16 +861,17 @@ function createAccountHtml(accounts) {
     const account = accounts[i].accountTitle || accounts[i];
     const id = account.split(" ").join("") + "-checkbox";
 
-    const template = `
+    const template = 
     <div class="input-group mb-1">
       <div class="input-group-text">
         <input id=${id} class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
       </div>
       <span class="input-group-text">${account}</span>
-    </div>`;
+    </div>;
     html += template
   }
 
   return html;
 }
 
+"
