@@ -501,7 +501,7 @@ function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, 
     "", "", "", "", "", "", "", "", "", "", // Headline 4-15
     "", "", // Description 1, Description 1 position
     "", "", // Description 2, Description 3
-    "", "", // Description 4, Max CPC (to be filled below)
+    "", "", "", // Description 4, (add one more empty string)
     "0.5", flexibleReach // Max CPC, Flexible Reach
   ]);
 }
