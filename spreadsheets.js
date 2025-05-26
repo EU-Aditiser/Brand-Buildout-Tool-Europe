@@ -1,4 +1,4 @@
-confim the changes"function removeAdTemplates(spreadsheetId, rowData, sheetId) {
+function removeAdTemplates(spreadsheetId, rowData, sheetId) {
   // Remove ad templates
 
   let removeRequests = [];
@@ -566,10 +566,10 @@ async function getSpreadsheetSingleManager(url, manager) {
   await gapi.client.sheets.spreadsheets.get({
     spreadsheetId,
     ranges: [
-      ${manager}!A1:AD150, //150 row limit imposed
-      URL Data!A1:D150
+      `${manager}!A1:AD150`, // 150 row limit imposed
+      'URL Data!A1:D150'
     ],
-    includeGridData: true                                
+    includeGridData: true
   }).then((response) => {
     res = response.result;
   });
@@ -843,35 +843,28 @@ function getManagerSheet(dataSpreadsheet, manager) {
 }
 
 function createManagerHtml(managers) {
-  let managerHtml = <select class="form-select" id="manager-select">;
+  let managerHtml = '<select class="form-select" id="manager-select">';
   for (let i = 0; i < managers.length; i++) {        
-    const template = <option value="${managers[i]}">${managers[i]}</option>;
+    const template = `<option value="${managers[i]}">${managers[i]}</option>`;
     managerHtml += template;
-  
   }
-  managerHtml += </select>;
-
-  return managerHtml
+  managerHtml += '</select>';
+  return managerHtml;
 }
 
 function createAccountHtml(accounts) {
   let html = "";
-
   for (let i = 0; i < accounts.length; i++) {
     const account = accounts[i].accountTitle || accounts[i];
     const id = account.split(" ").join("") + "-checkbox";
-
-    const template = 
-    <div class="input-group mb-1">
-      <div class="input-group-text">
-        <input id=${id} class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
-      </div>
-      <span class="input-group-text">${account}</span>
-    </div>;
-    html += template
+    const template =
+      `<div class="input-group mb-1">
+        <div class="input-group-text">
+          <input id="${id}" class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
+        </div>
+        <span class="input-group-text">${account}</span>
+      </div>`;
+    html += template;
   }
-
   return html;
 }
-
-"
