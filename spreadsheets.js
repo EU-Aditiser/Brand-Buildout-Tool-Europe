@@ -345,7 +345,10 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         for (let i = 0; i < adCopyRowData.length; i++) {
           const campaign = campaignTitle;
           const adGroup = adGroupTitle;
-        
+
+          /*test*/
+          console.log("Row length for ad copy:", values.length);
+
           const labels = !isCellEmpty(adCopyRowData[i].values[4]) ? adCopyRowData[i].values[4].userEnteredValue.stringValue : "";
           const adType = !isCellEmpty(adCopyRowData[i].values[5]) ? adCopyRowData[i].values[5].userEnteredValue.stringValue : "";
           const status = !isCellEmpty(adCopyRowData[i].values[6]) ? adCopyRowData[i].values[6].userEnteredValue.stringValue : "";
@@ -412,7 +415,8 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             description2,
             description3,
             description4,
-            "", "" // Max CPC, Flexible reach
+            "", // Max CPC
+            "" // flexibleReach
           ];
         
           const adRow = createRowData(adRowValues);
@@ -552,7 +556,7 @@ async function getSpreadsheetSingleManager(url, manager) {
   await gapi.client.sheets.spreadsheets.get({
     spreadsheetId,
     ranges: [
-      `${manager}!A1:Z150`, //150 row limit imposed
+      `${manager}!A1:AD150`, //150 row limit imposed
       `URL Data!A1:D150`
     ],
     includeGridData: true                                
