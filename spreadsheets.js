@@ -347,7 +347,8 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const adGroup = adGroupTitle;
 
           /*test*/
-          console.log("Row length for ad copy:", values.length);
+          console.log("Row length for ad copy:", adCopyRowData[i].values.length);
+
 
           const labels = !isCellEmpty(adCopyRowData[i].values[4]) ? adCopyRowData[i].values[4].userEnteredValue.stringValue : "";
           const adType = !isCellEmpty(adCopyRowData[i].values[5]) ? adCopyRowData[i].values[5].userEnteredValue.stringValue : "";
