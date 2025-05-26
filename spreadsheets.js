@@ -408,9 +408,9 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           ];
           
         
-          const adRow = createRowData(adRowValues);
-          handleFieldLengthLimits(adRow);
+          const adRow = createAdRow(adCopyRowData[i], brandTitle, campaignTitle, adGroupTitle, finalURL, campaign);
           masterSpreadsheet.sheets[0].data[0].rowData.push(adRow);
+
         }        
       
         
