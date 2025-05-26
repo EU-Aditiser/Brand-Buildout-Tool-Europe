@@ -487,12 +487,23 @@ function isCellEmpty(cell) {
 /**potentially hazasrdous */
 function createAdGroupRowData(campaign, adGroup, campaignStatus, adGroupStatus, campaignType) {
   const flexibleReach = (campaignType === "Acquisition" || campaignType === "Broad")
-  ? "Audience segments;Genders;Ages;Parental status;Household incomes"
-  : "Genders;Ages;Parental status;Household incomes";
-  return createRowData([campaign, adGroup,
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", // up to index 24 (Headline 15)
-    "", "", "", "", "", // up to index 29 (Description 4)
-    "0.5", flexibleReach])
+    ? "Audience segments;Genders;Ages;Parental status;Household incomes"
+    : "Genders;Ages;Parental status;Household incomes";
+  return createRowData([
+    campaign, adGroup,
+    "", "", // keyword, criterion
+    "", "", // Final URL, Labels
+    "", "", // Ad type, Status
+    "", "", // Description Line 1, Description Line 2
+    "", "", // Headline 1, Headline 1 position
+    "", "", // Headline 2, Headline 3
+    "", // Path 1
+    "", "", "", "", "", "", "", "", "", "", // Headline 4-15
+    "", "", // Description 1, Description 1 position
+    "", "", // Description 2, Description 3
+    "", "", // Description 4, Max CPC (to be filled below)
+    "0.5", flexibleReach // Max CPC, Flexible Reach
+  ]);
 }
 
 function indexIncluded (indexes, index) {
