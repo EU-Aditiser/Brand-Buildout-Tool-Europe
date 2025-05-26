@@ -296,10 +296,8 @@ async function refreshToken() {
   return new Promise((resolve, reject) => {
     try {
       tokenClient.requestAccessToken({
-        prompt: 'consent',
-        hint: 'select_account' // Add hint for better UX
+        prompt: 'none'
       });
-      
       // Set up a listener for the token response
       const tokenListener = (tokenResponse) => {
         if (tokenResponse && tokenResponse.access_token) {
@@ -310,7 +308,6 @@ async function refreshToken() {
           reject(new Error('Failed to refresh token'));
         }
       };
-      
       // Add the listener
       tokenClient.callback = tokenListener;
     } catch (error) {
@@ -324,8 +321,7 @@ async function refreshToken() {
 function requestSheetsAccess() {
   try {
     tokenClient.requestAccessToken({
-      prompt: 'consent',
-      hint: 'select_account'
+      prompt: 'none'
     });
   } catch (error) {
     console.error("Error requesting sheets access:", error);
