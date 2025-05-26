@@ -385,40 +385,28 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
         
           const adRowValues = [
-            campaign,
-            adGroup,
-            "", "", // keyword, criterion
+            campaignTitle,
+            adGroupTitle,
+            "", // keyword
+            "", // criterion type
             finalURL,
             labels,
             adType,
             status,
             descriptionLine1,
             descriptionLine2,
-            headline1,
-            headline1Position,
-            headline2,
-            headline3,
-            path, // still using 'path' as you did before
-            headline4,
-            headline5,
-            headline6,
-            headline7,
-            headline8,
-            headline9,
-            headline10,
-            headline11,
-            headline12,
-            headline13,
-            headline14,
-            headline15,
+            headlines[0], // ✅ Headline 1
+            headline1Position, // ✅ placed right after Headline 1 (index 11)
+            ...headlines.slice(1), // ✅ Headline 2 to 15 (indexes 12 to 25)
             description1,
             description1Position,
             description2,
             description3,
             description4,
-            "", // Max CPC
-            "" // flexibleReach
+            "", // Max CPC (index 31, column AG)
+            ""  // Flexible Reach (index 32, column AH)
           ];
+          
         
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
