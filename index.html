@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
-    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    <!-- Update security policies for Safari -->
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
     <meta http-equiv="Cross-Origin-Resource-Policy" content="cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' https: data:; frame-src 'self' https:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval';">
     <title>EU Aditiser</title>
     <!-- Preload Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,31 +99,48 @@
     <link rel="stylesheet" href="index.css">
     <!--Scripts-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
-    <!-- Update script loading order and add error handling -->
-    <script>
-      // Add error handling for script loading
-      function handleScriptError(error) {
-        console.error('Script loading error:', error);
-      }
-      
-      // Load Google Sign-In script with error handling
-      const gsiScript = document.createElement('script');
-      gsiScript.src = 'https://accounts.google.com/gsi/client';
-      gsiScript.async = true;
-      gsiScript.defer = true;
-      gsiScript.onerror = handleScriptError;
-      document.body.appendChild(gsiScript);
-
-      // Load Google API script with error handling
-      const gapiScript = document.createElement('script');
-      gapiScript.src = 'https://apis.google.com/js/api.js';
-      gapiScript.defer = true;
-      gapiScript.onerror = handleScriptError;
-      document.body.appendChild(gapiScript);
-    </script>
-    <!-- Other scripts -->
+    
+    <!-- Load Google API scripts first -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Then load application scripts -->
     <script src="constants.js"></script>
     <script src="spreadsheets.js"></script>
     <script src="index.js"></script>
+
+    <!-- Initialize Google Sign-In after DOM is loaded -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Google Sign-In
+        if (typeof google !== 'undefined' && google.accounts) {
+          google.accounts.id.initialize({
+            client_id: '584505830851-0k3n478q7ecobi5k97o460c4dqoj8jf5.apps.googleusercontent.com',
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: false,
+            context: 'signin',
+            ux_mode: 'popup',
+            itp_support: true
+          });
+
+          // Render the sign-in button
+          google.accounts.id.renderButton(
+            document.getElementById('g_id_signin'),
+            { 
+              theme: 'outline', 
+              size: 'large',
+              type: 'standard',
+              text: 'signin_with',
+              shape: 'rectangular',
+              width: 250,
+              logo_alignment: 'left'
+            }
+          );
+        } else {
+          console.error('Google Sign-In not loaded properly');
+        }
+      });
+    </script>
   </body>
 </html>
