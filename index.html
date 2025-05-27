@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Security policies compatible with Google Sign-In -->
+    <!-- Removed COOP header for testing -->
     <meta http-equiv="Cross-Origin-Resource-Policy" content="cross-origin">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' https: data:; frame-src 'self' https:; script-src 'self' https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; font-src 'self' https: data:;">
     <title>EU Aditiser</title>
@@ -15,7 +15,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
     <link rel="stylesheet" href="index.css">
     <style>
-      /* Fallback font stack in case Google Fonts fails to load */
+      .cookie-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+        padding: 10px 20px;
+        margin: 20px 0 10px 0;
+        border-radius: 4px;
+        font-size: 1rem;
+        text-align: center;
+        font-weight: 500;
+      }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
       }
@@ -29,6 +39,9 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
   </head>
   <body>
+    <div class="cookie-warning">
+      <strong>Notice:</strong> For Google Sign-In to work, please enable third-party cookies in your browser. If you have trouble logging in, try disabling browser extensions or using Incognito mode.
+    </div>
     <div class="container">
       <header class="navbar">
         <div class="container">
