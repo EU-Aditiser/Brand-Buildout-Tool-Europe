@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Update security policies for Safari -->
+    <!-- Security policies compatible with Google Sign-In -->
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
     <meta http-equiv="Cross-Origin-Resource-Policy" content="cross-origin">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' https: data:; frame-src 'self' https:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' https: data:; frame-src 'self' https:; script-src 'self' https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; font-src 'self' https: data:;">
     <title>EU Aditiser</title>
     <!-- Preload Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,6 +49,7 @@
            data-auto_prompt="false"
            data-itp_support="true">
       </div>
+      <div id="signin-error" style="color: red; display: none; margin-top: 10px;"></div>
 
       <h3>Brand Buildout Quickstart Template Tool</h3>
       <div class="input-group">
@@ -109,11 +110,28 @@
     <script src="spreadsheets.js"></script>
     <script src="index.js"></script>
 
-    <!-- Initialize Google Sign-In after DOM is loaded -->
+    <!-- Robust Google Sign-In script loading -->
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Google Sign-In
-        if (typeof google !== 'undefined' && google.accounts) {
+      function showSignInError(msg) {
+        var el = document.getElementById('signin-error');
+        if (el) {
+          el.textContent = msg;
+          el.style.display = 'block';
+        }
+      }
+      function loadGsiScript(callback) {
+        var script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = callback;
+        script.onerror = function() {
+          showSignInError('Failed to load Google Sign-In. Please check your connection or disable ad blockers.');
+        };
+        document.head.appendChild(script);
+      }
+      function initGoogleSignIn() {
+        if (window.google && google.accounts && google.accounts.id) {
           google.accounts.id.initialize({
             client_id: '584505830851-0k3n478q7ecobi5k97o460c4dqoj8jf5.apps.googleusercontent.com',
             callback: handleCredentialResponse,
@@ -123,12 +141,10 @@
             ux_mode: 'popup',
             itp_support: true
           });
-
-          // Render the sign-in button
           google.accounts.id.renderButton(
             document.getElementById('g_id_signin'),
-            { 
-              theme: 'outline', 
+            {
+              theme: 'outline',
               size: 'large',
               type: 'standard',
               text: 'signin_with',
@@ -138,8 +154,13 @@
             }
           );
         } else {
-          console.error('Google Sign-In not loaded properly');
+          showSignInError('Google Sign-In not loaded properly. Please refresh the page or try a different browser.');
         }
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        loadGsiScript(function() {
+          setTimeout(initGoogleSignIn, 100); // slight delay to ensure script is ready
+        });
       });
     </script>
   </body>
