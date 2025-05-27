@@ -20,6 +20,12 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
       }
     </style>
+    <!-- Add debugging script -->
+    <script>
+      window.addEventListener('error', function(e) {
+        console.log('Global error:', e.message, 'at', e.filename, ':', e.lineno);
+      });
+    </script>
   </head>
   <body>
     <div class="container">
@@ -33,11 +39,13 @@
 
       <h4>Aditiser Account Login</h4>
       <!--Add buttons to initiate auth sequence-->
-      <div id="g_id_signin" data-client_id="584505830851-0k3n478q7ecobi5k97o460c4dqoj8jf5.apps.googleusercontent.com"
+      <div id="g_id_signin" 
+           data-client_id="584505830851-0k3n478q7ecobi5k97o460c4dqoj8jf5.apps.googleusercontent.com"
            data-context="signin"
            data-ux_mode="popup"
            data-callback="handleCredentialResponse"
-           data-auto_prompt="false">
+           data-auto_prompt="false"
+           data-itp_support="true">
       </div>
 
       <h3>Brand Buildout Quickstart Template Tool</h3>
@@ -89,11 +97,31 @@
     <link rel="stylesheet" href="index.css">
     <!--Scripts-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
-    <!-- Ensure correct order: constants.js, spreadsheets.js, then index.js -->
+    <!-- Update script loading order and add error handling -->
+    <script>
+      // Add error handling for script loading
+      function handleScriptError(error) {
+        console.error('Script loading error:', error);
+      }
+      
+      // Load Google Sign-In script with error handling
+      const gsiScript = document.createElement('script');
+      gsiScript.src = 'https://accounts.google.com/gsi/client';
+      gsiScript.async = true;
+      gsiScript.defer = true;
+      gsiScript.onerror = handleScriptError;
+      document.body.appendChild(gsiScript);
+
+      // Load Google API script with error handling
+      const gapiScript = document.createElement('script');
+      gapiScript.src = 'https://apis.google.com/js/api.js';
+      gapiScript.defer = true;
+      gapiScript.onerror = handleScriptError;
+      document.body.appendChild(gapiScript);
+    </script>
+    <!-- Other scripts -->
     <script src="constants.js"></script>
     <script src="spreadsheets.js"></script>
     <script src="index.js"></script>
-    <script defer src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </body>
 </html>
