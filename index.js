@@ -253,7 +253,7 @@ accountBuildoutButton.onclick = async function() {
     await handleAccountBuildoutClick();
   } catch (error) {
     console.error("Error in account buildout button click:", error);
-    alert('An error occurred. Please try again or refresh the page.');
+      alert('An error occurred. Please try again or refresh the page.');
   }
 };
 
