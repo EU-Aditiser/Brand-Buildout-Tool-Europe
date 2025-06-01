@@ -544,23 +544,26 @@ async function fetchSpreadsheetNoGridData(url) {
   return await res.json();
 }
 
-async function getSpreadsheet(url) {
-  if (!gapi.client.sheets) {
-    alert("Google Sheets API is not initialized. Please sign in again or refresh the page.");
+// Helper to fetch a spreadsheet with grid data using access token
+async function fetchSpreadsheet(url) {
+  const spreadsheetId = getDocumentIdFromUrl(url);
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=true`;
+  if (!window.accessToken) {
+    alert("Google access token not available. Please sign in again.");
     return null;
   }
-  const spreadsheetId = getDocumentIdFromUrl(url);
-  let res = null;
-
-  await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [],
-    includeGridData: true                                
-  }).then((response) => {
-    res = response.result;
+  const res = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `Bearer ${window.accessToken}`
+    }
   });
-
-  return res;
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Sheets API error:', err);
+    alert('Sheets API error: ' + err);
+    return null;
+  }
+  return await res.json();
 }
 
 // Helper to fetch a single manager's sheet and URL Data using access token
