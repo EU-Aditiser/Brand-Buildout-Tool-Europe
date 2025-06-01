@@ -563,27 +563,26 @@ async function getSpreadsheet(url) {
   return res;
 }
 
-//modify to include urldata sheet
-async function getSpreadsheetSingleManager(url, manager) {
-  if (!gapi.client.sheets) {
-    alert("Google Sheets API is not initialized. Please sign in again or refresh the page.");
+// Helper to fetch a single manager's sheet and URL Data using access token
+async function fetchSpreadsheetSingleManager(url, manager) {
+  const spreadsheetId = getDocumentIdFromUrl(url);
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AD150')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
+  if (!window.accessToken) {
+    alert("Google access token not available. Please sign in again.");
     return null;
   }
-  const spreadsheetId = getDocumentIdFromUrl(url);
-  let res = null;
-
-  await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [
-      `${manager}!A1:AD150`, // 150 row limit imposed
-      'URL Data!A1:D150'
-    ],
-    includeGridData: true
-  }).then((response) => {
-    res = response.result;
+  const res = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `Bearer ${window.accessToken}`
+    }
   });
-
-  return res;
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Sheets API error:', err);
+    alert('Sheets API error: ' + err);
+    return null;
+  }
+  return await res.json();
 }
 
 function createInsertDimensionRequest(sheetId, index, numRows) {

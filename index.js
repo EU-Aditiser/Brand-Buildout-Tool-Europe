@@ -90,7 +90,7 @@ async function handleAccountBuildoutClick(e) {
 
       const manager = readManagerSelectData();
       MANAGER = manager;
-      const dataSpreadsheet = await getSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
+      const dataSpreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
       const managerSheet = getManagerSheet(dataSpreadsheet, manager)
       ACCOUNTS = getAccountsFromManagerSheet(managerSheet)
       
@@ -114,7 +114,7 @@ async function handleAccountBuildoutClick(e) {
       
       const formDataCreate = readAccountBuildoutData();
       const brandBuildoutSpreadsheet = await getSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
-      const accountDataSpreadsheetCreate = await getSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
+      const accountDataSpreadsheetCreate = await fetchSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
       
       try {
         const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
