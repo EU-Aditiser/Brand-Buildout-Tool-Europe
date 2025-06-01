@@ -227,7 +227,8 @@ function handleCredentialResponse(response) {
     initializeGapiClient().then(() => {
       console.log("GAPI client initialized");
     }).catch((e) => {
-      alert("Failed to initialize Google API client: " + e.message);
+      console.error("Failed to initialize Google API client:", e, JSON.stringify(e));
+      alert("Failed to initialize Google API client: " + (e && e.message ? e.message : e));
     });
     // You may want to decode the JWT or send it to your backend for verification
     // Proceed with your app logic here
