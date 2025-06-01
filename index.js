@@ -1,6 +1,8 @@
 /** 
  * Initialize Buttons 
  * */
+const authorizeButton = document.getElementById('authorize_button');
+const signoutButton = document.getElementById('signout_button');
 const createBrandBuildoutTemplateButton = document.getElementById('create_brand_buildout_template_button');
 const accountBuildoutButton = document.getElementById('create_account_buildout_button');
 
@@ -9,12 +11,77 @@ let MANAGER = "";
 updateButtonState(BUTTON_STATE);
 
 let ACCOUNTS = [];
-let accessToken = null;
 
-// Stub for isTokenExpired to prevent ReferenceError
-function isTokenExpired() {
-  // TODO: Implement real token expiration check if needed
-  return false;
+/**
+ *  On load, called to load the auth2 library and API client library.
+ */
+function handleClientLoad() {
+  gapi.load('client:auth2', initClient);
+}
+
+/**
+ *  Initializes the API client library and sets up sign-in state
+ *  listeners.
+ */
+function initClient() {
+  gapi.client.init({
+    apiKey: API_KEY,
+    clientId: CLIENT_ID,
+    discoveryDocs: DISCOVERY_DOCS,
+    scope: SCOPES
+  }).then(function () {
+    // Listen for sign-in state changes.
+    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+    // Handle the initial sign-in state.
+    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+
+    // Initiate Buttons
+    authorizeButton.onclick = handleAuthClick;
+    signoutButton.onclick = handleSignoutClick;
+    createBrandBuildoutTemplateButton.onclick = handleCreateBrandTemplateBuildoutClick;
+    accountBuildoutButton.onclick = handleAccountBuildoutClick;
+
+    // Initiate patch notes
+    const patchNotes = readTextFile("patchnotes.txt")
+    document.getElementById('patch_notes').innerText=patchNotes;    
+    
+  }, function(error) {
+    appendPre(JSON.stringify(error, null, 2));
+  });
+}
+
+/**
+ *  Called when the signed in status changes, to update the UI
+ *  appropriately. After a sign-in, the API is called.
+ */
+function updateSigninStatus(isSignedIn) {
+  if (isSignedIn) {
+    authorizeButton.style.display = 'none';
+    signoutButton.style.display = 'block';
+  } else {
+    authorizeButton.style.display = 'block';
+    signoutButton.style.display = 'none';
+  }
+}
+
+// =======================
+// Button Handling
+// =======================
+
+
+/**
+ *  Sign in the user upon button click.
+ */
+function handleAuthClick(event) {
+  gapi.auth2.getAuthInstance().signIn();
+}
+
+/**
+ *  Sign out the user upon button click.
+ */
+function handleSignoutClick(event) {
+  gapi.auth2.getAuthInstance().signOut();
 }
 
 /**
@@ -60,10 +127,6 @@ function updateButtonState(state) {
 
 function readManagerSelectData() {
   const managerSelect = document.getElementById("manager-select");
-  if (!managerSelect) {
-    alert("Manager select element not found. Please refresh the page and try again.");
-    return "";
-  }
   const manager = managerSelect.options[managerSelect.selectedIndex].value;
   return manager;
 }
@@ -78,7 +141,7 @@ async function handleAccountBuildoutClick(e) {
       updateButtonState("")
 
       const managerFormData = readAccountBuildoutData();
-      const managerDataSpreadsheet = await fetchSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
+      const managerDataSpreadsheet = await getSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
       const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
       
       const managerHtml = createManagerHtml(managers)
@@ -93,13 +156,8 @@ async function handleAccountBuildoutClick(e) {
       const formData = readAccountBuildoutData();
 
       const manager = readManagerSelectData();
-      if (!manager) {
-        alert("Please select a manager before proceeding.");
-        updateButtonState(BUTTON_STATE);
-        break;
-      }
       MANAGER = manager;
-      const dataSpreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
+      const dataSpreadsheet = await getSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
       const managerSheet = getManagerSheet(dataSpreadsheet, manager)
       ACCOUNTS = getAccountsFromManagerSheet(managerSheet)
       
@@ -122,19 +180,10 @@ async function handleAccountBuildoutClick(e) {
       }
       
       const formDataCreate = readAccountBuildoutData();
-      const brandBuildoutSpreadsheet = await fetchSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
-      const accountDataSpreadsheetCreate = await fetchSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
+      const brandBuildoutSpreadsheet = await getSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
+      const accountDataSpreadsheetCreate = await getSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
       
-      try {
-        const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
-        if (newSheetUrl) {
-          window.open(newSheetUrl, '_blank');
-        }
-      } catch (e) {
-        console.error("Error in processRequest:", e);
-        alert("An error occurred: " + (e.message || e));
-        // Optionally: signoutButton.onclick();
-      }
+      await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
 
       BUTTON_STATE = "GET_DATA";
       updateButtonState(BUTTON_STATE);
@@ -204,59 +253,4 @@ function readTextFile(file)
     }
     rawFile.send(null);
     return rawFile.responseText;
-}
-
-// Implement GIS OAuth 2.0 code flow
-function gisLoaded() {
-  google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: (tokenResponse) => {
-      if (tokenResponse && tokenResponse.access_token) {
-        accessToken = tokenResponse.access_token;
-        window.accessToken = accessToken;
-        document.getElementById('g_id_signin').style.display = 'none';
-        // Proceed with your app logic here
-      } else {
-        alert('Failed to get access token.');
-      }
-    }
-  }).requestAccessToken();
-}
-
-window.onload = function() {
-  // Render a custom sign-in button
-  const signInBtn = document.getElementById('g_id_signin');
-  signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
-  document.getElementById('custom-google-signin').onclick = function() {
-    gisLoaded();
-  };
-};
-
-// Update the account buildout button click handler
-accountBuildoutButton.onclick = async function() {
-  try {
-    // Check authentication state
-    if (!accessToken) {
-      alert('You must sign in with Google before proceeding.');
-      return;
-    }
-    // Proceed with account buildout
-    await handleAccountBuildoutClick();
-  } catch (error) {
-    console.error("Error in account buildout button click:", error);
-    alert('An error occurred. Please try again or refresh the page.');
-    resetUIState(); // Reset UI so user can try again
-  }
-};
-
-// Add a global function to reset UI state after spreadsheet creation
-function resetUIState() {
-  // Clear input fields
-  document.getElementById("master_brand_buildout_spreadsheet").value = "";
-  document.getElementById("account_data_spreadsheet").value = "";
-  document.getElementById("accounts_form").innerHTML = "";
-  BUTTON_STATE = "GET_MANAGER_DATA";
-  updateButtonState(BUTTON_STATE);
-  ACCOUNTS = [];
 }
