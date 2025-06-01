@@ -952,101 +952,72 @@ function markCellRed(cell) {
 
 async function createNewDocument(spreadsheet) {
   console.log('createNewDocument received:', JSON.stringify(spreadsheet, null, 2));
-  if (!spreadsheet) {
-    alert("createNewDocument: spreadsheet is null or undefined.");
-    console.error("createNewDocument: spreadsheet is null or undefined.");
-    return null;
+
+  // Validate input structure
+  if (!spreadsheet || !spreadsheet.properties || !spreadsheet.properties.title) {
+    throw new Error('Invalid spreadsheet structure: missing required properties');
   }
 
-  // Validate initial structure
-  if (!spreadsheet.properties || !spreadsheet.properties.title) {
-    console.error("createNewDocument: Missing spreadsheet properties or title");
-    alert("Failed to create spreadsheet: Missing required properties");
-    return null;
-  }
+  // Transform the spreadsheet structure to match Google Sheets API requirements
+  const apiSpreadsheet = {
+    properties: {
+      title: spreadsheet.properties.title
+    },
+    sheets: spreadsheet.sheets.map(sheet => {
+      // Ensure each sheet has the correct structure
+      const apiSheet = {
+        properties: {
+          title: sheet.properties.title,
+          sheetId: sheet.properties.sheetId || 0,
+          index: sheet.properties.index || 0,
+          sheetType: 'GRID',
+          gridProperties: {
+            rowCount: sheet.properties.gridProperties.rowCount || 1000,
+            columnCount: sheet.properties.gridProperties.columnCount || 26
+          }
+        }
+      };
 
-  // Transform if needed
-  if (!Array.isArray(spreadsheet.sheets) || spreadsheet.sheets.length === 0 || 
-      !spreadsheet.sheets[0].properties || !spreadsheet.sheets[0].data) {
-    console.warn("createNewDocument: Transforming spreadsheet format");
-    const transformedSpreadsheet = transformFetchedSpreadsheetToCreationFormat(spreadsheet);
-    if (!transformedSpreadsheet) {
-      alert("createNewDocument: transformation failed. Cannot create new document.");
-      console.error("createNewDocument: transformation failed.");
-      return null;
-    }
-    spreadsheet = transformedSpreadsheet;
-  }
+      // Add data if it exists
+      if (sheet.data && sheet.data.length > 0) {
+        apiSheet.data = sheet.data.map(data => ({
+          rowData: data.rowData,
+          startRow: data.startRow || 0,
+          startColumn: data.startColumn || 0
+        }));
+      }
 
-  // Validate the spreadsheet structure
-  if (!Array.isArray(spreadsheet.sheets) || spreadsheet.sheets.length === 0) {
-    console.error("createNewDocument: Invalid spreadsheet structure after transformation:", JSON.stringify(spreadsheet, null, 2));
-    alert("Failed to create spreadsheet: Invalid structure");
-    return null;
-  }
+      return apiSheet;
+    })
+  };
 
-  const firstSheet = spreadsheet.sheets[0];
-  console.log('First sheet object (after transformation if needed):', JSON.stringify(firstSheet, null, 2));
-  
-  // Validate sheet structure
-  if (!firstSheet || !firstSheet.properties || !firstSheet.properties.title || !firstSheet.data) {
-    console.error("createNewDocument: Invalid first sheet structure:", JSON.stringify(firstSheet, null, 2));
-    alert("Failed to create spreadsheet: Invalid sheet structure");
-    return null;
-  }
-
-  // Validate data structure
-  if (!Array.isArray(firstSheet.data) || firstSheet.data.length === 0 || !Array.isArray(firstSheet.data[0].rowData)) {
-    console.error("createNewDocument: Invalid data structure in first sheet:", JSON.stringify(firstSheet.data, null, 2));
-    alert("Failed to create spreadsheet: Invalid data structure");
-    return null;
-  }
+  console.log('createNewDocument: Attempting to create spreadsheet with structure:', JSON.stringify(apiSpreadsheet, null, 2));
 
   try {
-    const spreadsheetStructure = {
-      title: spreadsheet.properties.title,
-      sheets: spreadsheet.sheets.map(sheet => ({
-        title: sheet.properties.title,
-        rowCount: sheet.data[0].rowData.length,
-        properties: {
-          sheetId: sheet.properties.sheetId,
-          index: sheet.properties.index,
-          sheetType: sheet.properties.sheetType,
-          gridProperties: sheet.properties.gridProperties
-        }
-      }))
-    };
-    console.log('createNewDocument: Attempting to create spreadsheet with structure:', JSON.stringify(spreadsheetStructure, null, 2));
-
-    let res = null;
-    await gapi.client.sheets.spreadsheets.create(spreadsheet)
-      .then((response) => { 
-        res = response.result;
-        console.log('createNewDocument: Successfully created spreadsheet:', JSON.stringify(res, null, 2));
-      })
-      .catch((error) => {
-        console.error('createNewDocument: Error creating spreadsheet:', {
-          message: error.message,
-          status: error.status,
-          statusText: error.statusText,
-          details: error.details,
-          body: error.body,
-          stack: error.stack
-        });
-        throw error;
-      });
-    return res;
-  } catch (error) {
-    console.error('createNewDocument: Exception creating spreadsheet:', {
-      message: error.message,
-      status: error.status,
-      statusText: error.statusText,
-      details: error.details,
-      body: error.body,
-      stack: error.stack
+    const response = await gapi.client.sheets.spreadsheets.create({
+      resource: apiSpreadsheet
     });
-    alert("Failed to create spreadsheet: " + (error.message || "Unknown error"));
-    return null;
+
+    if (response.status === 200 && response.result) {
+      console.log('createNewDocument: Successfully created spreadsheet:', response.result.spreadsheetUrl);
+      return response.result.spreadsheetUrl;
+    } else {
+      console.error('createNewDocument: Unexpected response:', response);
+      throw new Error('Failed to create spreadsheet: Unexpected response from API');
+    }
+  } catch (error) {
+    console.error('createNewDocument: Error creating spreadsheet:', error);
+    if (error.body) {
+      try {
+        const errorDetails = JSON.parse(error.body);
+        console.error('createNewDocument: API Error details:', errorDetails);
+        throw new Error(`Failed to create spreadsheet: ${errorDetails.error?.message || 'Unknown error'}`);
+      } catch (e) {
+        console.error('createNewDocument: Error parsing error details:', e);
+        throw new Error('Failed to create spreadsheet: Invalid error response from API');
+      }
+    }
+    throw new Error('Failed to create spreadsheet: ' + (error.message || 'Unknown error'));
   }
 }
 
