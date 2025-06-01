@@ -46,8 +46,12 @@ function removeExtraCols(spreadsheetId, rowData, sheetId) {
 }
 
 function getAccountsFromManagerSheet(sheet) {
+  if (!sheet || !sheet.data) {
+    console.error('getAccountsFromManagerSheet: Invalid sheet:', sheet);
+    alert('Account data is not available. Please try again.');
+    return [];
+  }
   let accounts = [];
-
   //skip header
   for(let i = 1; i < sheet.data[0].rowData.length; i++) {
     const row = sheet.data[0].rowData[i];
@@ -856,16 +860,19 @@ function getManagersFromDataSpreadsheet(dataSpreadsheet) {
 }
 
 function getManagerSheet(dataSpreadsheet, manager) {
+  if (!dataSpreadsheet || !Array.isArray(dataSpreadsheet.sheets)) {
+    console.error('getManagerSheet: Invalid dataSpreadsheet:', dataSpreadsheet);
+    alert('Manager sheet data is not available. Please try again.');
+    return null;
+  }
   let managerSheet;
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
-
     if(dataSpreadsheet.sheets[i].properties.title === manager) {
       managerSheet = dataSpreadsheet.sheets[i];
       break;
     }
   }
-
-  return managerSheet
+  return managerSheet;
 }
 
 function createManagerHtml(managers) {
