@@ -355,8 +355,31 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     "Headline 4", "Headline 5", "Headline 6", "Headline 7",
     "Headline 8", "Headline 9", "Headline 10", "Headline 11", "Headline 12", "Headline 13", "Headline 14", "Headline 15", "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4", "Max CPC", "Flexible Reach"
   ];
-  //adds header row 
-  let masterSpreadsheet = createSpreadSheet(account+ " Buildout", rawHeaderRow);
+  
+  // Create the master spreadsheet with proper structure
+  let masterSpreadsheet = {
+    properties: {
+      title: account + " Buildout"
+    },
+    sheets: [{
+      properties: {
+        title: "Sheet1",
+        sheetId: 0,
+        index: 0,
+        sheetType: "GRID",
+        gridProperties: {
+          rowCount: 1000,
+          columnCount: 26
+        }
+      },
+      data: [{
+        rowData: [createRowData(rawHeaderRow)],
+        startRow: 0,
+        startColumn: 0
+      }]
+    }]
+  };
+
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
   const campaigns = getAccountCampaignsFromSheet(adCopySheet, account);
 
@@ -514,7 +537,13 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
       }
     }
   }
-  console.log('createAccountBuildoutSpreadsheet: Successfully created spreadsheet for account:', account);
+  console.log('createAccountBuildoutSpreadsheet: Final spreadsheet structure:', {
+    title: masterSpreadsheet.properties.title,
+    sheets: masterSpreadsheet.sheets.map(sheet => ({
+      title: sheet.properties.title,
+      rowCount: sheet.data[0].rowData.length
+    }))
+  });
   return masterSpreadsheet;
 }
 
@@ -904,8 +933,16 @@ async function createNewDocument(spreadsheet) {
     return null;
   }
 
+  // Validate initial structure
+  if (!spreadsheet.properties || !spreadsheet.properties.title) {
+    console.error("createNewDocument: Missing spreadsheet properties or title");
+    alert("Failed to create spreadsheet: Missing required properties");
+    return null;
+  }
+
   // Transform if needed
-  if (!Array.isArray(spreadsheet.sheets) || (spreadsheet.sheets.length > 0 && !spreadsheet.sheets[0].data)) {
+  if (!Array.isArray(spreadsheet.sheets) || spreadsheet.sheets.length === 0 || 
+      !spreadsheet.sheets[0].properties || !spreadsheet.sheets[0].data) {
     console.warn("createNewDocument: Transforming spreadsheet format");
     const transformedSpreadsheet = transformFetchedSpreadsheetToCreationFormat(spreadsheet);
     if (!transformedSpreadsheet) {
@@ -926,13 +963,22 @@ async function createNewDocument(spreadsheet) {
   const firstSheet = spreadsheet.sheets[0];
   console.log('First sheet object (after transformation if needed):', firstSheet);
   
-  if (!firstSheet || !firstSheet.properties || !firstSheet.data) {
+  // Validate sheet structure
+  if (!firstSheet || !firstSheet.properties || !firstSheet.properties.title || !firstSheet.data) {
     console.error("createNewDocument: Invalid first sheet structure:", firstSheet);
     alert("Failed to create spreadsheet: Invalid sheet structure");
     return null;
   }
 
   try {
+    console.log('createNewDocument: Attempting to create spreadsheet with structure:', {
+      title: spreadsheet.properties.title,
+      sheets: spreadsheet.sheets.map(sheet => ({
+        title: sheet.properties.title,
+        rowCount: sheet.data[0].rowData.length
+      }))
+    });
+
     let res = null;
     await gapi.client.sheets.spreadsheets.create(spreadsheet)
       .then((response) => { 
@@ -952,18 +998,30 @@ async function createNewDocument(spreadsheet) {
 }
 
 function createSpreadSheet(title, headers) {
+  console.log('createSpreadSheet: Creating spreadsheet with title:', title);
   var spreadSheet = {
+    properties: {
+      title: title
+    },
+    sheets: [{
       properties: {
-        title
+        title: "Sheet1",
+        sheetId: 0,
+        index: 0,
+        sheetType: "GRID",
+        gridProperties: {
+          rowCount: 1000,
+          columnCount: 26
+        }
       },
-      sheets: [{
-        data: [{
-          //header row
-          rowData: [createRowData(headers)]
-        }]
+      data: [{
+        rowData: [createRowData(headers)],
+        startRow: 0,
+        startColumn: 0
       }]
-    }
-
+    }]
+  };
+  console.log('createSpreadSheet: Created spreadsheet structure:', spreadSheet);
   return spreadSheet;
 }
 
