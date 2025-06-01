@@ -135,6 +135,14 @@ function getAdCopyRowData(sheet, account, language, type) {
 }
 
 async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accounts) {
+  if (!buildoutSpreadsheet || !buildoutSpreadsheet.sheets) {
+    alert('Failed to load the brand buildout spreadsheet. Please check your access and try again.');
+    return;
+  }
+  if (!accountDataSpreadsheet || !accountDataSpreadsheet.sheets) {
+    alert('Failed to load the account data spreadsheet. Please check your access and try again.');
+    return;
+  }
   const urlDataSheet = getUrlDataSheet(accountDataSpreadsheet);
   let spreadsheets = [];
 
@@ -142,10 +150,8 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
 
   for(let i = 0; i < accounts.length; i++) {
     const accountBuildoutSpreadsheet = await createAccountBuildoutSpreadsheet(buildoutSpreadsheet, managerSheet, urlDataSheet, accounts[i]);
-
     spreadsheets.push(accountBuildoutSpreadsheet);
   }
-        
 
   for(let i = 0; i < spreadsheets.length; i++) {
     const newSpreadsheet = await createNewDocument(spreadsheets[i]);
@@ -728,6 +734,10 @@ function markCellRed(cell) {
 }
 
 async function createNewDocument(spreadsheet) {
+  if (!spreadsheet || !spreadsheet.sheets) {
+    alert('Invalid spreadsheet data. Cannot create new document.');
+    return null;
+  }
   let res = null;
 
   await gapi.client.sheets.spreadsheets.create(spreadsheet)
