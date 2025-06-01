@@ -60,6 +60,10 @@ function updateButtonState(state) {
 
 function readManagerSelectData() {
   const managerSelect = document.getElementById("manager-select");
+  if (!managerSelect) {
+    alert("Manager select element not found. Please refresh the page and try again.");
+    return "";
+  }
   const manager = managerSelect.options[managerSelect.selectedIndex].value;
   return manager;
 }
