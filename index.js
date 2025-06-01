@@ -74,7 +74,7 @@ async function handleAccountBuildoutClick(e) {
       updateButtonState("")
 
       const managerFormData = readAccountBuildoutData();
-      const managerDataSpreadsheet = await getSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
+      const managerDataSpreadsheet = await fetchSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
       const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
       
       const managerHtml = createManagerHtml(managers)

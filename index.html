@@ -119,59 +119,5 @@
     <script src="constants.js"></script>
     <script src="spreadsheets.js"></script>
     <script src="index.js"></script>
-
-    <!-- Robust Google Sign-In script loading -->
-    <script>
-      function showSignInError(msg) {
-        var el = document.getElementById('signin-error');
-        if (el) {
-          el.textContent = msg;
-          el.style.display = 'block';
-        }
-      }
-      function loadGsiScript(callback) {
-        var script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = callback;
-        script.onerror = function() {
-          showSignInError('Failed to load Google Sign-In. Please check your connection or disable ad blockers.');
-        };
-        document.head.appendChild(script);
-      }
-      function initGoogleSignIn() {
-        if (window.google && google.accounts && google.accounts.id) {
-          google.accounts.id.initialize({
-            client_id: '739271544108-998iptaatlmnk5ob3k7iudoqqhgjk1in.apps.googleusercontent.com',
-            callback: handleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: false,
-            context: 'signin',
-            ux_mode: 'popup',
-            itp_support: true
-          });
-          google.accounts.id.renderButton(
-            document.getElementById('g_id_signin'),
-            {
-              theme: 'outline',
-              size: 'large',
-              type: 'standard',
-              text: 'signin_with',
-              shape: 'rectangular',
-              width: 250,
-              logo_alignment: 'left'
-            }
-          );
-        } else {
-          showSignInError('Google Sign-In not loaded properly. Please refresh the page or try a different browser.');
-        }
-      }
-      document.addEventListener('DOMContentLoaded', function() {
-        loadGsiScript(function() {
-          setTimeout(initGoogleSignIn, 100); // slight delay to ensure script is ready
-        });
-      });
-    </script>
   </body>
 </html>
