@@ -93,6 +93,11 @@ async function handleAccountBuildoutClick(e) {
       const formData = readAccountBuildoutData();
 
       const manager = readManagerSelectData();
+      if (!manager) {
+        alert("Please select a manager before proceeding.");
+        updateButtonState(BUTTON_STATE);
+        break;
+      }
       MANAGER = manager;
       const dataSpreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
       const managerSheet = getManagerSheet(dataSpreadsheet, manager)
