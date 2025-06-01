@@ -972,19 +972,39 @@ async function createNewDocument(spreadsheet) {
           index: sheet.properties.index || 0,
           sheetType: 'GRID',
           gridProperties: {
-            rowCount: sheet.properties.gridProperties.rowCount || 1000,
-            columnCount: sheet.properties.gridProperties.columnCount || 26
+            rowCount: Math.max(1000, sheet.data?.[0]?.rowData?.length || 1000),
+            columnCount: 25 // Fixed column count as per API requirements
           }
         }
       };
 
-      // Add data if it exists
+      // Add data if it exists, ensuring proper structure
       if (sheet.data && sheet.data.length > 0) {
-        apiSheet.data = sheet.data.map(data => ({
-          rowData: data.rowData,
-          startRow: data.startRow || 0,
-          startColumn: data.startColumn || 0
-        }));
+        apiSheet.data = sheet.data.map(data => {
+          // Ensure each row has exactly 25 columns
+          const rowData = data.rowData.map(row => {
+            const values = row.values || [];
+            // Pad or truncate to exactly 25 columns
+            while (values.length < 25) {
+              values.push({
+                userEnteredValue: { stringValue: "" },
+                userEnteredFormat: {
+                  backgroundColor: { red: 1, green: 1, blue: 1 }
+                }
+              });
+            }
+            if (values.length > 25) {
+              values.length = 25;
+            }
+            return { ...row, values };
+          });
+
+          return {
+            rowData,
+            startRow: data.startRow || 0,
+            startColumn: data.startColumn || 0
+          };
+        });
       }
 
       return apiSheet;
@@ -1011,10 +1031,11 @@ async function createNewDocument(spreadsheet) {
       try {
         const errorDetails = JSON.parse(error.body);
         console.error('createNewDocument: API Error details:', errorDetails);
-        throw new Error(`Failed to create spreadsheet: ${errorDetails.error?.message || 'Unknown error'}`);
+        if (errorDetails.error?.message) {
+          throw new Error(`Failed to create spreadsheet: ${errorDetails.error.message}`);
+        }
       } catch (e) {
         console.error('createNewDocument: Error parsing error details:', e);
-        throw new Error('Failed to create spreadsheet: Invalid error response from API');
       }
     }
     throw new Error('Failed to create spreadsheet: ' + (error.message || 'Unknown error'));
