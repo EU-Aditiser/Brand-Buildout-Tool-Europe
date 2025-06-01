@@ -1,6 +1,6 @@
 // Client ID and API key from the Developer Console
 var CLIENT_ID = '739271544108-998iptaatlmnk5ob3k7iudoqqhgjk1in.apps.googleusercontent.com';
-var API_KEY = 'AIzaSyC6LwQLz7R0OfeaXQyG5lIglq_F7Xo_pI8';
+var API_KEY = 'AIzaSyC80nDBaEG2aaKZ-OHWRE-Vnb-jFQZBFYc';
 
 // Array of API discovery doc URLs for APIs used by the quickstart
 var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
