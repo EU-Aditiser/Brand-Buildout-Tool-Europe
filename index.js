@@ -197,78 +197,30 @@ function readTextFile(file)
     return rawFile.responseText;
 }
 
-// Add Google API client initialization helper
-function initializeGapiClient() {
-  return new Promise((resolve, reject) => {
-    gapi.load('client', async () => {
-      try {
-        await gapi.client.init({
-          apiKey: API_KEY,
-          clientId: CLIENT_ID,
-          discoveryDocs: DISCOVERY_DOCS,
-          scope: SCOPES
-        });
-        resolve();
-      } catch (e) {
-        reject(e);
+// Implement GIS OAuth 2.0 code flow
+function gisLoaded() {
+  google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (tokenResponse) => {
+      if (tokenResponse && tokenResponse.access_token) {
+        accessToken = tokenResponse.access_token;
+        document.getElementById('g_id_signin').style.display = 'none';
+        // Proceed with your app logic here
+      } else {
+        alert('Failed to get access token.');
       }
-    });
-  });
-}
-
-// GIS Authentication Migration
-function handleCredentialResponse(response) {
-  if (response.credential) {
-    // Hide the sign-in button
-    document.getElementById('g_id_signin').style.display = 'none';
-    // Store the credential (JWT) for your app logic
-    accessToken = response.credential;
-    // If using gapi.client for Sheets API, set the access token
-    if (window.gapi && gapi.client && gapi.client.setToken) {
-      gapi.client.setToken({access_token: accessToken});
     }
-    // Initialize GAPI client after sign-in
-    initializeGapiClient().then(() => {
-      console.log("GAPI client initialized");
-    }).catch((e) => {
-      console.error("Failed to initialize Google API client:", e, JSON.stringify(e));
-      alert("Failed to initialize Google API client: " + (e && e.message ? e.message : e));
-    });
-    // You may want to decode the JWT or send it to your backend for verification
-    // Proceed with your app logic here
-  } else {
-    console.error("Sign-in failed:", response);
-    alert('Sign-in failed. Please try again.');
-  }
+  }).requestAccessToken();
 }
 
 window.onload = function() {
-  // Initialize Google Sign-In with updated configuration
-  google.accounts.id.initialize({
-    client_id: CLIENT_ID,
-    callback: handleCredentialResponse,
-    ux_mode: 'redirect', // Use redirect mode only
-    login_uri: 'https://eu-aditiser.github.io',
-    auto_select: false,
-    cancel_on_tap_outside: false,
-    context: 'signin',
-    prompt_parent_id: 'g_id_signin',
-    use_fedcm_for_prompt: true
-  });
-
-  // Render the sign-in button with updated configuration
-  google.accounts.id.renderButton(
-    document.getElementById('g_id_signin'),
-    { 
-      theme: 'outline', 
-      size: 'large',
-      type: 'standard',
-      text: 'signin_with',
-      shape: 'rectangular',
-      width: 250, // Specify width
-      logo_alignment: 'left'
-    }
-  );
+  // Render a custom sign-in button
+  const signInBtn = document.getElementById('g_id_signin');
+  signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
+  document.getElementById('custom-google-signin').onclick = function() {
+    gisLoaded();
+  };
 };
 
 // Update the account buildout button click handler

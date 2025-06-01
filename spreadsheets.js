@@ -522,23 +522,26 @@ function getDocumentIdFromUrl (url) {
   return documentId;
 }
 
-async function getSpreadsheetNoGridData(url) {
-  if (!gapi.client.sheets) {
-    alert("Google Sheets API is not initialized. Please sign in again or refresh the page.");
+// Helper to fetch Google Sheets data using access token
+async function fetchSpreadsheetNoGridData(url) {
+  const spreadsheetId = getDocumentIdFromUrl(url);
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`;
+  if (!window.accessToken) {
+    alert("Google access token not available. Please sign in again.");
     return null;
   }
-  const spreadsheetId = getDocumentIdFromUrl(url);
-  let res = null;
-
-  await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [],
-    includeGridData: false                                
-  }).then((response) => {
-    res = response.result;
+  const res = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `Bearer ${window.accessToken}`
+    }
   });
-
-  return res;
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Sheets API error:', err);
+    alert('Sheets API error: ' + err);
+    return null;
+  }
+  return await res.json();
 }
 
 async function getSpreadsheet(url) {
