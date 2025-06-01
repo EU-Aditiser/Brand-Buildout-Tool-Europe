@@ -46,8 +46,12 @@ function removeExtraCols(spreadsheetId, rowData, sheetId) {
 }
 
 function getAccountsFromManagerSheet(sheet) {
+  if (!sheet || !sheet.data) {
+    console.error('getAccountsFromManagerSheet: Invalid sheet:', sheet);
+    alert('Account data is not available. Please try again.');
+    return [];
+  }
   let accounts = [];
-
   //skip header
   for(let i = 1; i < sheet.data[0].rowData.length; i++) {
     const row = sheet.data[0].rowData[i];
@@ -125,40 +129,45 @@ function getAdCopyRowData(sheet, account, language, type) {
       const adAccount = rows[i].values[1].userEnteredValue.stringValue;
       const adLanguage = rows[i].values[2].userEnteredValue.stringValue;
       const adType = rows[i].values[3].userEnteredValue.stringValue;
-      console.log(adAccount, adLanguage, adType)
       if(adAccount === account && adLanguage === language && adType === type)  {
         adCopyRows.push(rows[i])
       }
     } 
   }
-  console.log(adCopyRows)
 
   return adCopyRows;
 }
 
 async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accounts) {
+  if (!buildoutSpreadsheet || !buildoutSpreadsheet.sheets) {
+    alert('Failed to load the brand buildout spreadsheet. Please check your access and try again.');
+    return;
+  }
+  if (!accountDataSpreadsheet || !accountDataSpreadsheet.sheets) {
+    alert('Failed to load the account data spreadsheet. Please check your access and try again.');
+    return;
+  }
   const urlDataSheet = getUrlDataSheet(accountDataSpreadsheet);
-  console.log("URLDATA", urlDataSheet)
   let spreadsheets = [];
 
   const managerSheet = getManagerSheet(accountDataSpreadsheet, MANAGER);
 
   for(let i = 0; i < accounts.length; i++) {
     const accountBuildoutSpreadsheet = await createAccountBuildoutSpreadsheet(buildoutSpreadsheet, managerSheet, urlDataSheet, accounts[i]);
-
     spreadsheets.push(accountBuildoutSpreadsheet);
   }
-        
 
-  console.log(spreadsheets)
   for(let i = 0; i < spreadsheets.length; i++) {
     const newSpreadsheet = await createNewDocument(spreadsheets[i]);
-    console.log(newSpreadsheet)
-    const url = newSpreadsheet.spreadsheetUrl;
-    window.open(url, '_blank');
+    if (newSpreadsheet) {
+      const url = newSpreadsheet.spreadsheetUrl;
+      window.open(url, '_blank');
+    } else {
+      console.warn("createNewDocument returned null (or undefined) for spreadsheet index " + i + ". Skipping open new window.");
+    }
   }
 
-  location.reload()
+  location.reload();
 }
 
 function getUrlDataSheet(accountDataSpreadsheet) {
@@ -177,7 +186,6 @@ function getUrlDataSheet(accountDataSpreadsheet) {
 function getAccountAdCopySheet(accountDataSpreadsheet, account) {
   for(let i = 0; i < accountDataSpreadsheet.sheets.length; i++) {
     const sheet = accountDataSpreadsheet.sheets[i];
-    console.log("sheet", sheet.properties.title, account)
     if(sheet.properties.title === account || sheet.properties.title === account.accountTitle) {
       return sheet;
     }
@@ -194,7 +202,6 @@ function getAccountsFromAccountSheet(sheet) {
     if(rowIsEmpty(row)) continue;
 
     const accountTitle = row.values[0].userEnteredValue.stringValue;
-    console.log(accountTitle)
     
     if(accountTitle !== "URL DATA"){
       accounts.push(accountTitle);
@@ -297,7 +304,6 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
       for (let k = 0; k < campaigns.length; k++) {
         const language = languages[j];
         const campaign = campaigns[k]
-        //console.log(account.accountTitle, "Brand: " + i , languages[j], campaigns[k])
         const sheet = keywordSpreadsheet.sheets[i];
         const rawRowData = sheet.data[0].rowData;
         const rowData = rawRowData.slice(1); //removes header from each brand buildout
@@ -338,17 +344,12 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         //Ads
         //TODO
         const adCopyRowData = getAdCopyRowData(adCopySheet, account, language, campaign);
-        console.log(adCopyRowData)
         const brandTitle = sheet.properties.title;
         const path = createPath(brandTitle);
         
         for (let i = 0; i < adCopyRowData.length; i++) {
           const campaign = campaignTitle;
           const adGroup = adGroupTitle;
-
-          /*test*/
-          console.log("Row length for ad copy:", adCopyRowData[i].values.length);
-
 
           const labels = !isCellEmpty(adCopyRowData[i].values[4]) ? adCopyRowData[i].values[4].userEnteredValue.stringValue : "";
           const adType = !isCellEmpty(adCopyRowData[i].values[5]) ? adCopyRowData[i].values[5].userEnteredValue.stringValue : "";
@@ -419,10 +420,6 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             "", // Max CPC
             "" // flexibleReach
           ];
-        //test to find out the issues
-          for (let i = 0; i < rawHeaderRow.length; i++) {
-            console.log(`Header[${i}]: ${rawHeaderRow[i]} | Value[${i}]: ${adRowValues[i]}`);
-          }
         
           const adRow = createRowData(adRowValues);
           handleFieldLengthLimits(adRow);
@@ -539,53 +536,86 @@ function getDocumentIdFromUrl (url) {
   return documentId;
 }
 
-async function getSpreadsheetNoGridData(url) {
+// Helper to fetch Google Sheets data using access token
+async function fetchSpreadsheetNoGridData(url) {
   const spreadsheetId = getDocumentIdFromUrl(url);
-  let res = null;
-
-  await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [],
-    includeGridData: false                                
-  }).then((response) => {
-    res = response.result;
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`;
+  if (!window.accessToken) {
+    alert("Google access token not available. Please sign in again.");
+    return null;
+  }
+  const res = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `Bearer ${window.accessToken}`
+    }
   });
-
-  return res;
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Sheets API error:', err);
+    alert('Sheets API error: ' + err);
+    return null;
+  }
+  return await res.json();
 }
 
-async function getSpreadsheet(url) {
+// Helper to fetch a spreadsheet with grid data using access token
+async function fetchSpreadsheet(url) {
   const spreadsheetId = getDocumentIdFromUrl(url);
-  let res = null;
-
-  await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [],
-    includeGridData: true                                
-  }).then((response) => {
-    res = response.result;
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=true`;
+  if (!window.accessToken) {
+    alert("Google access token not available. Please sign in again.");
+    return null;
+  }
+  const res = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `Bearer ${window.accessToken}`
+    }
   });
-
-  return res;
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Sheets API error:', err);
+    alert('Sheets API error: ' + err);
+    return null;
+  }
+  return await res.json();
 }
 
-//modify to include urldata sheet
-async function getSpreadsheetSingleManager(url, manager) {
+// Helper to fetch a single manager's sheet and URL Data using access token
+async function fetchSpreadsheetSingleManager(url, manager) {
   const spreadsheetId = getDocumentIdFromUrl(url);
-  let res = null;
-
-  await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId,
-    ranges: [
-      `${manager}!A1:AD150`, // 150 row limit imposed
-      'URL Data!A1:D150'
-    ],
-    includeGridData: true
-  }).then((response) => {
-    res = response.result;
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AD150')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
+  if (!window.accessToken) {
+    alert("Google access token not available. Please sign in again.");
+    return null;
+  }
+  const res = await fetch(apiUrl, {
+    headers: {
+      'Authorization': `Bearer ${window.accessToken}`
+    }
   });
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Sheets API error:', err);
+    alert('Sheets API error: ' + err);
+    return null;
+  }
+  return await res.json();
+}
 
-  return res;
+function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
+  if (!fetchedSpreadsheet || !fetchedSpreadsheet.sheets) {
+    console.error("transformFetchedSpreadsheetToCreationFormat: Invalid fetched spreadsheet (missing .sheets).");
+    return null;
+  }
+  // Create a new object with properties and a sheets array (each sheet has a .data property).
+  const creationSpreadsheet = {
+    properties: { title: fetchedSpreadsheet.properties?.title || "Untitled" },
+    sheets: fetchedSpreadsheet.sheets.map(sheet => ({
+      properties: { title: sheet.properties?.title || "Sheet1" },
+      data: sheet.data || []
+    }))
+  };
+  return creationSpreadsheet;
 }
 
 function createInsertDimensionRequest(sheetId, index, numRows) {
@@ -728,13 +758,32 @@ function markCellRed(cell) {
 }
 
 async function createNewDocument(spreadsheet) {
+  console.log('createNewDocument received:', spreadsheet);
+  if (!spreadsheet) {
+    alert("createNewDocument: spreadsheet is null or undefined.");
+    console.error("createNewDocument: spreadsheet is null or undefined.");
+    return null;
+  }
+  // Transform if not in creation format
+  if (!Array.isArray(spreadsheet.sheets) || (spreadsheet.sheets.length > 0 && !spreadsheet.sheets[0].data)) {
+    console.warn("createNewDocument: spreadsheet does not have a .sheets array (or its sheets do not have a .data property). Transforming using transformFetchedSpreadsheetToCreationFormat.");
+    spreadsheet = transformFetchedSpreadsheetToCreationFormat(spreadsheet);
+    if (!spreadsheet) {
+      alert("createNewDocument: transformation failed. Cannot create new document.");
+      console.error("createNewDocument: transformation failed.");
+      return null;
+    }
+  }
+  const firstSheet = spreadsheet.sheets[0];
+  console.log('First sheet object (after transformation if needed):', firstSheet);
+  if (!firstSheet) {
+    alert("createNewDocument: first sheet is undefined. Cannot create new document.");
+    console.error("createNewDocument: first sheet is undefined.");
+    return null;
+  }
   let res = null;
-
   await gapi.client.sheets.spreadsheets.create(spreadsheet)
-  .then((response => {
-    res = response.result
-  }));
-
+    .then((response) => { res = response.result; });
   return res;
 }
 
@@ -831,26 +880,38 @@ function consoleLogSpreadSheet(spreadSheet) {
 }
 
 function getManagersFromDataSpreadsheet(dataSpreadsheet) {
+  if (!dataSpreadsheet || !dataSpreadsheet.sheets) {
+    alert('Failed to load spreadsheet data. Please check your access and try again.');
+    return [];
+  }
   let managers = [];
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
     const sheet = dataSpreadsheet.sheets[i];
     if(sheet.properties.title !== "URL Data") managers.push(sheet.properties.title);
   }
-
   return managers;
 }
 
 function getManagerSheet(dataSpreadsheet, manager) {
-  let managerSheet;
+  if (!dataSpreadsheet || !Array.isArray(dataSpreadsheet.sheets)) {
+    console.error('getManagerSheet: Invalid dataSpreadsheet:', dataSpreadsheet);
+    alert('Manager sheet data is not available. Please try again.');
+    return null;
+  }
+  const availableSheetNames = dataSpreadsheet.sheets.map(s => s.properties.title);
+  console.log('getManagerSheet: available sheets:', availableSheetNames, 'looking for manager:', manager);
+  let managerSheet = null;
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
-
     if(dataSpreadsheet.sheets[i].properties.title === manager) {
       managerSheet = dataSpreadsheet.sheets[i];
       break;
     }
   }
-
-  return managerSheet
+  if (!managerSheet) {
+    console.warn('getManagerSheet: Manager sheet not found for manager:', manager);
+    alert('Manager sheet not found: ' + manager + '. Available sheets: ' + availableSheetNames.join(', '));
+  }
+  return managerSheet;
 }
 
 function createManagerHtml(managers) {
