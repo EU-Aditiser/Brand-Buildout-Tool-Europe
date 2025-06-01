@@ -206,22 +206,51 @@ function readTextFile(file)
     return rawFile.responseText;
 }
 
-// Implement GIS OAuth 2.0 code flow
-function gisLoaded() {
-  google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: (tokenResponse) => {
-      if (tokenResponse && tokenResponse.access_token) {
-        accessToken = tokenResponse.access_token;
-        window.accessToken = accessToken;
-        document.getElementById('g_id_signin').style.display = 'none';
-        // Proceed with your app logic here
-      } else {
-        alert('Failed to get access token.');
+// Initialize Google API client
+function initGoogleApiClient() {
+  return new Promise((resolve, reject) => {
+    gapi.load('client', async () => {
+      try {
+        await gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        });
+        console.log('Google API client initialized successfully');
+        resolve();
+      } catch (error) {
+        console.error('Error initializing Google API client:', error);
+        reject(error);
       }
-    }
-  }).requestAccessToken();
+    });
+  });
+}
+
+// Implement GIS OAuth 2.0 code flow
+async function gisLoaded() {
+  try {
+    // Initialize the Google API client first
+    await initGoogleApiClient();
+    
+    // Then initialize the OAuth client
+    google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          accessToken = tokenResponse.access_token;
+          window.accessToken = accessToken;
+          document.getElementById('g_id_signin').style.display = 'none';
+          console.log('Successfully authenticated with Google');
+        } else {
+          console.error('Failed to get access token:', tokenResponse);
+          alert('Failed to get access token. Please try again.');
+        }
+      }
+    }).requestAccessToken();
+  } catch (error) {
+    console.error('Error in gisLoaded:', error);
+    alert('Failed to initialize Google API client. Please refresh the page and try again.');
+  }
 }
 
 window.onload = function() {
@@ -236,11 +265,18 @@ window.onload = function() {
 // Update the account buildout button click handler
 accountBuildoutButton.onclick = async function() {
   try {
+    // Check if Google API client is initialized
+    if (!gapi.client.sheets) {
+      console.log('Initializing Google API client...');
+      await initGoogleApiClient();
+    }
+    
     // Check authentication state
     if (!accessToken) {
       alert('You must sign in with Google before proceeding.');
       return;
     }
+    
     // Proceed with account buildout
     await handleAccountBuildoutClick();
   } catch (error) {
