@@ -710,10 +710,19 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
     return null;
   }
 
-  // If it's already in the correct format, return it as is
+  // Validate input structure
+  if (!fetchedSpreadsheet.properties || !fetchedSpreadsheet.properties.title) {
+    console.error("transformFetchedSpreadsheetToCreationFormat: Missing required properties");
+    return null;
+  }
+
+  // If it's already in the correct format with all required fields, return it as is
   if (Array.isArray(fetchedSpreadsheet.sheets) && 
       fetchedSpreadsheet.sheets.length > 0 && 
-      fetchedSpreadsheet.sheets[0].data) {
+      fetchedSpreadsheet.sheets[0].properties &&
+      fetchedSpreadsheet.sheets[0].data &&
+      fetchedSpreadsheet.sheets[0].properties.title &&
+      fetchedSpreadsheet.sheets[0].properties.sheetId !== undefined) {
     console.log('transformFetchedSpreadsheetToCreationFormat: Spreadsheet already in correct format');
     return fetchedSpreadsheet;
   }
@@ -721,19 +730,21 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
   // Create a new object with the required structure
   const creationSpreadsheet = {
     properties: {
-      title: fetchedSpreadsheet.properties?.title || "Untitled"
+      title: fetchedSpreadsheet.properties.title
     },
     sheets: []
   };
 
   // If we have sheets data, transform it
-  if (fetchedSpreadsheet.sheets) {
-    creationSpreadsheet.sheets = fetchedSpreadsheet.sheets.map(sheet => {
+  if (Array.isArray(fetchedSpreadsheet.sheets)) {
+    creationSpreadsheet.sheets = fetchedSpreadsheet.sheets.map((sheet, index) => {
+      // Ensure we have valid sheet properties
+      const sheetProperties = sheet.properties || {};
       const transformedSheet = {
         properties: {
-          title: sheet.properties?.title || "Sheet1",
-          sheetId: sheet.properties?.sheetId || 0,
-          index: sheet.properties?.index || 0,
+          title: sheetProperties.title || `Sheet${index + 1}`,
+          sheetId: sheetProperties.sheetId || index,
+          index: sheetProperties.index || index,
           sheetType: "GRID",
           gridProperties: {
             rowCount: 1000,
@@ -744,14 +755,14 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
       };
 
       // If the sheet has data, include it
-      if (sheet.data) {
+      if (Array.isArray(sheet.data)) {
         transformedSheet.data = sheet.data.map(gridData => ({
-          rowData: gridData.rowData || [],
-          startRow: gridData.startRow || 0,
-          startColumn: gridData.startColumn || 0
+          rowData: Array.isArray(gridData.rowData) ? gridData.rowData : [],
+          startRow: typeof gridData.startRow === 'number' ? gridData.startRow : 0,
+          startColumn: typeof gridData.startColumn === 'number' ? gridData.startColumn : 0
         }));
       } else {
-        // If no data, create an empty data array
+        // If no data, create an empty data array with proper structure
         transformedSheet.data = [{
           rowData: [],
           startRow: 0,
@@ -762,7 +773,7 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
       return transformedSheet;
     });
   } else {
-    // If no sheets data, create a default sheet
+    // If no sheets data, create a default sheet with proper structure
     creationSpreadsheet.sheets = [{
       properties: {
         title: "Sheet1",
@@ -780,6 +791,20 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
         startColumn: 0
       }]
     }];
+  }
+
+  // Validate the transformed structure
+  if (!Array.isArray(creationSpreadsheet.sheets) || creationSpreadsheet.sheets.length === 0) {
+    console.error("transformFetchedSpreadsheetToCreationFormat: Failed to create valid sheet structure");
+    return null;
+  }
+
+  // Validate each sheet
+  for (const sheet of creationSpreadsheet.sheets) {
+    if (!sheet.properties || !sheet.properties.title || !Array.isArray(sheet.data)) {
+      console.error("transformFetchedSpreadsheetToCreationFormat: Invalid sheet structure in transformed spreadsheet");
+      return null;
+    }
   }
 
   console.log('transformFetchedSpreadsheetToCreationFormat: Output:', creationSpreadsheet);
