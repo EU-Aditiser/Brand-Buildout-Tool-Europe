@@ -373,11 +373,15 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
     return null;
   }
 
+  // Update header row to include all required columns
   const rawHeaderRow = [
-    "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", "Description Line 1", "Description Line 2",
+    "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status",
+    "Description Line 1", "Description Line 2",
     "Headline 1", "Headline 1 position", "Headline 2", "Headline 3", "Path 1",
-    "Headline 4", "Headline 5", "Headline 6", "Headline 7",
-    "Headline 8", "Headline 9", "Headline 10", "Headline 11", "Headline 12", "Headline 13", "Headline 14", "Headline 15", "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4", "Max CPC", "Flexible Reach"
+    "Headline 4", "Headline 5", "Headline 6", "Headline 7", "Headline 8", "Headline 9", "Headline 10",
+    "Headline 11", "Headline 12", "Headline 13", "Headline 14", "Headline 15",
+    "Description 1", "Description 1 position", "Description 2", "Description 3", "Description 4",
+    "Max CPC", "Flexible Reach"
   ];
   
   // Create the master spreadsheet with proper structure
@@ -393,7 +397,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         sheetType: "GRID",
         gridProperties: {
           rowCount: 1000,
-          columnCount: 26
+          columnCount: rawHeaderRow.length // Set column count based on actual header length
         }
       },
       data: [{
@@ -516,7 +520,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             headline1Position,
             headline2,
             headline3,
-            path, // still using 'path' as you did before
+            path,
             headline4,
             headline5,
             headline6,
@@ -535,7 +539,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             description3,
             description4,
             "", // Max CPC
-            "" // flexibleReach
+            "" // Flexible Reach
           ];
         
           const adRow = createRowData(adRowValues);
@@ -983,6 +987,10 @@ async function createNewDocument(spreadsheet) {
     throw new Error('Invalid spreadsheet structure: missing required properties');
   }
 
+  // Get the number of columns from the header row
+  const headerRow = spreadsheet.sheets[0]?.data[0]?.rowData[0]?.values || [];
+  const columnCount = headerRow.length;
+
   // Transform the spreadsheet structure to match Google Sheets API requirements
   const apiSpreadsheet = {
     properties: {
@@ -998,7 +1006,7 @@ async function createNewDocument(spreadsheet) {
           sheetType: 'GRID',
           gridProperties: {
             rowCount: Math.max(1000, sheet.data?.[0]?.rowData?.length || 1000),
-            columnCount: 25 // Fixed column count as per API requirements
+            columnCount: columnCount // Use the actual number of columns from header
           }
         }
       };
@@ -1006,11 +1014,11 @@ async function createNewDocument(spreadsheet) {
       // Add data if it exists, ensuring proper structure
       if (sheet.data && sheet.data.length > 0) {
         apiSheet.data = sheet.data.map(data => {
-          // Ensure each row has exactly 25 columns
+          // Ensure each row has exactly the right number of columns
           const rowData = data.rowData.map(row => {
             const values = row.values || [];
-            // Pad or truncate to exactly 25 columns
-            while (values.length < 25) {
+            // Pad or truncate to match header column count
+            while (values.length < columnCount) {
               values.push({
                 userEnteredValue: { stringValue: "" },
                 userEnteredFormat: {
@@ -1018,8 +1026,8 @@ async function createNewDocument(spreadsheet) {
                 }
               });
             }
-            if (values.length > 25) {
-              values.length = 25;
+            if (values.length > columnCount) {
+              values.length = columnCount;
             }
             return { ...row, values };
           });
