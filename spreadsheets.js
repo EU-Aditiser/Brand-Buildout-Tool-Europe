@@ -190,6 +190,7 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
     return;
   }
 
+  let createdUrls = [];
   for(let i = 0; i < spreadsheets.length; i++) {
     console.log('processRequest: Creating new document for spreadsheet', i, ':', {
       hasSheets: !!spreadsheets[i]?.sheets,
@@ -200,16 +201,39 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
       console.error('processRequest: spreadsheet at index', i, 'is undefined');
       continue;
     }
-    const newSpreadsheet = await createNewDocument(spreadsheets[i]);
-    if (newSpreadsheet) {
-      const url = newSpreadsheet.spreadsheetUrl;
-      window.open(url, '_blank');
-    } else {
-      console.warn("createNewDocument returned null (or undefined) for spreadsheet index " + i + ". Skipping open new window.");
+    try {
+      const spreadsheetUrl = await createNewDocument(spreadsheets[i]);
+      if (spreadsheetUrl) {
+        console.log('processRequest: Successfully created spreadsheet URL:', spreadsheetUrl);
+        createdUrls.push(spreadsheetUrl);
+      } else {
+        console.error('processRequest: createNewDocument returned null URL for spreadsheet index', i);
+      }
+    } catch (error) {
+      console.error('processRequest: Error creating spreadsheet:', error);
+      alert('Failed to create spreadsheet: ' + error.message);
     }
   }
 
-  location.reload();
+  // Open all created spreadsheets in new tabs
+  if (createdUrls.length > 0) {
+    console.log('processRequest: Opening', createdUrls.length, 'spreadsheets in new tabs');
+    createdUrls.forEach(url => {
+      if (url && url.startsWith('https://')) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        console.error('processRequest: Invalid spreadsheet URL:', url);
+      }
+    });
+  } else {
+    console.error('processRequest: No spreadsheets were created successfully');
+    alert('No spreadsheets could be created. Please check the console for details.');
+  }
+
+  // Don't reload the page immediately to allow console logs to be visible
+  setTimeout(() => {
+    location.reload();
+  }, 2000);
 }
 
 function getUrlDataSheet(accountDataSpreadsheet) {
