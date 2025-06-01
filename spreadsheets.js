@@ -874,3 +874,10 @@ function createAccountHtml(accounts) {
   }
   return html;
 }
+
+initializeGapiClient().then(() => {
+  console.log("GAPI client initialized");
+}).catch((e) => {
+  console.error("Failed to initialize Google API client:", e, JSON.stringify(e));
+  alert("Failed to initialize Google API client: " + (e && e.message ? e.message : e));
+});
