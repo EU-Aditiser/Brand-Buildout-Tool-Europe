@@ -707,7 +707,8 @@ async function fetchSpreadsheet(url) {
 // Helper to fetch a single manager's sheet and URL Data using access token
 async function fetchSpreadsheetSingleManager(url, manager) {
   const spreadsheetId = getDocumentIdFromUrl(url);
-  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AD150')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
+  // Update range to include all columns up to AH (column 34) to cover all headlines and descriptions
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AH150')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
   if (!window.accessToken) {
     alert("Google access token not available. Please sign in again.");
     return null;
