@@ -205,6 +205,7 @@ function gisLoaded() {
     callback: (tokenResponse) => {
       if (tokenResponse && tokenResponse.access_token) {
         accessToken = tokenResponse.access_token;
+        window.accessToken = accessToken;
         document.getElementById('g_id_signin').style.display = 'none';
         // Proceed with your app logic here
       } else {

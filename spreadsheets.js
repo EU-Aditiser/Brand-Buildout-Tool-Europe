@@ -829,12 +829,15 @@ function consoleLogSpreadSheet(spreadSheet) {
 }
 
 function getManagersFromDataSpreadsheet(dataSpreadsheet) {
+  if (!dataSpreadsheet || !dataSpreadsheet.sheets) {
+    alert('Failed to load spreadsheet data. Please check your access and try again.');
+    return [];
+  }
   let managers = [];
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
     const sheet = dataSpreadsheet.sheets[i];
     if(sheet.properties.title !== "URL Data") managers.push(sheet.properties.title);
   }
-
   return managers;
 }
 
