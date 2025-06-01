@@ -865,12 +865,18 @@ function getManagerSheet(dataSpreadsheet, manager) {
     alert('Manager sheet data is not available. Please try again.');
     return null;
   }
-  let managerSheet;
+  const availableSheetNames = dataSpreadsheet.sheets.map(s => s.properties.title);
+  console.log('getManagerSheet: available sheets:', availableSheetNames, 'looking for manager:', manager);
+  let managerSheet = null;
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
     if(dataSpreadsheet.sheets[i].properties.title === manager) {
       managerSheet = dataSpreadsheet.sheets[i];
       break;
     }
+  }
+  if (!managerSheet) {
+    console.warn('getManagerSheet: Manager sheet not found for manager:', manager);
+    alert('Manager sheet not found: ' + manager + '. Available sheets: ' + availableSheetNames.join(', '));
   }
   return managerSheet;
 }
