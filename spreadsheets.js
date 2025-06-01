@@ -159,11 +159,15 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
 
   for(let i = 0; i < spreadsheets.length; i++) {
     const newSpreadsheet = await createNewDocument(spreadsheets[i]);
-    const url = newSpreadsheet.spreadsheetUrl;
-    window.open(url, '_blank');
+    if (newSpreadsheet) {
+      const url = newSpreadsheet.spreadsheetUrl;
+      window.open(url, '_blank');
+    } else {
+      console.warn("createNewDocument returned null (or undefined) for spreadsheet index " + i + ". Skipping open new window.");
+    }
   }
 
-  location.reload()
+  location.reload();
 }
 
 function getUrlDataSheet(accountDataSpreadsheet) {
@@ -598,6 +602,22 @@ async function fetchSpreadsheetSingleManager(url, manager) {
   return await res.json();
 }
 
+function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
+  if (!fetchedSpreadsheet || !fetchedSpreadsheet.sheets) {
+    console.error("transformFetchedSpreadsheetToCreationFormat: Invalid fetched spreadsheet (missing .sheets).");
+    return null;
+  }
+  // Create a new object with properties and a sheets array (each sheet has a .data property).
+  const creationSpreadsheet = {
+    properties: { title: fetchedSpreadsheet.properties?.title || "Untitled" },
+    sheets: fetchedSpreadsheet.sheets.map(sheet => ({
+      properties: { title: sheet.properties?.title || "Sheet1" },
+      data: sheet.data || []
+    }))
+  };
+  return creationSpreadsheet;
+}
+
 function createInsertDimensionRequest(sheetId, index, numRows) {
   const request = {
     insertDimension: {
@@ -739,24 +759,31 @@ function markCellRed(cell) {
 
 async function createNewDocument(spreadsheet) {
   console.log('createNewDocument received:', spreadsheet);
-  if (!spreadsheet || !Array.isArray(spreadsheet.sheets)) {
-    alert('Invalid spreadsheet data (no sheets array). Cannot create new document.');
-    console.error('Spreadsheet object:', spreadsheet);
+  if (!spreadsheet) {
+    alert("createNewDocument: spreadsheet is null or undefined.");
+    console.error("createNewDocument: spreadsheet is null or undefined.");
     return null;
   }
+  // Transform if not in creation format
+  if (!Array.isArray(spreadsheet.sheets) || (spreadsheet.sheets.length > 0 && !spreadsheet.sheets[0].data)) {
+    console.warn("createNewDocument: spreadsheet does not have a .sheets array (or its sheets do not have a .data property). Transforming using transformFetchedSpreadsheetToCreationFormat.");
+    spreadsheet = transformFetchedSpreadsheetToCreationFormat(spreadsheet);
+    if (!spreadsheet) {
+      alert("createNewDocument: transformation failed. Cannot create new document.");
+      console.error("createNewDocument: transformation failed.");
+      return null;
+    }
+  }
   const firstSheet = spreadsheet.sheets[0];
-  console.log('First sheet object:', firstSheet);
+  console.log('First sheet object (after transformation if needed):', firstSheet);
   if (!firstSheet) {
-    alert('First sheet is undefined. Cannot create new document.');
+    alert("createNewDocument: first sheet is undefined. Cannot create new document.");
+    console.error("createNewDocument: first sheet is undefined.");
     return null;
   }
   let res = null;
-
   await gapi.client.sheets.spreadsheets.create(spreadsheet)
-  .then((response => {
-    res = response.result
-  }));
-
+    .then((response) => { res = response.result; });
   return res;
 }
 
