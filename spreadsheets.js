@@ -523,6 +523,10 @@ function getDocumentIdFromUrl (url) {
 }
 
 async function getSpreadsheetNoGridData(url) {
+  if (!gapi.client.sheets) {
+    alert("Google Sheets API is not initialized. Please sign in again or refresh the page.");
+    return null;
+  }
   const spreadsheetId = getDocumentIdFromUrl(url);
   let res = null;
 
@@ -538,6 +542,10 @@ async function getSpreadsheetNoGridData(url) {
 }
 
 async function getSpreadsheet(url) {
+  if (!gapi.client.sheets) {
+    alert("Google Sheets API is not initialized. Please sign in again or refresh the page.");
+    return null;
+  }
   const spreadsheetId = getDocumentIdFromUrl(url);
   let res = null;
 
@@ -554,6 +562,10 @@ async function getSpreadsheet(url) {
 
 //modify to include urldata sheet
 async function getSpreadsheetSingleManager(url, manager) {
+  if (!gapi.client.sheets) {
+    alert("Google Sheets API is not initialized. Please sign in again or refresh the page.");
+    return null;
+  }
   const spreadsheetId = getDocumentIdFromUrl(url);
   let res = null;
 

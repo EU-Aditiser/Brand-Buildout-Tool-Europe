@@ -197,6 +197,25 @@ function readTextFile(file)
     return rawFile.responseText;
 }
 
+// Add Google API client initialization helper
+function initializeGapiClient() {
+  return new Promise((resolve, reject) => {
+    gapi.load('client', async () => {
+      try {
+        await gapi.client.init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
+        });
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
 // GIS Authentication Migration
 function handleCredentialResponse(response) {
   if (response.credential) {
@@ -204,6 +223,12 @@ function handleCredentialResponse(response) {
     document.getElementById('g_id_signin').style.display = 'none';
     // Store the credential (JWT) for your app logic
     accessToken = response.credential;
+    // Initialize GAPI client after sign-in
+    initializeGapiClient().then(() => {
+      console.log("GAPI client initialized");
+    }).catch((e) => {
+      alert("Failed to initialize Google API client: " + e.message);
+    });
     // You may want to decode the JWT or send it to your backend for verification
     // Proceed with your app logic here
   } else {
