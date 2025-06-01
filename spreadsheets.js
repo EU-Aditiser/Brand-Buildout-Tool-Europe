@@ -734,8 +734,10 @@ function markCellRed(cell) {
 }
 
 async function createNewDocument(spreadsheet) {
-  if (!spreadsheet || !spreadsheet.sheets) {
-    alert('Invalid spreadsheet data. Cannot create new document.');
+  console.log('createNewDocument received:', spreadsheet);
+  if (!spreadsheet || !Array.isArray(spreadsheet.sheets)) {
+    alert('Invalid spreadsheet data (no sheets array). Cannot create new document.');
+    console.error('Spreadsheet object:', spreadsheet);
     return null;
   }
   let res = null;
