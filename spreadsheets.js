@@ -139,25 +139,67 @@ function getAdCopyRowData(sheet, account, language, type) {
 }
 
 async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accounts) {
+  console.log('processRequest: Starting with accounts:', accounts);
+  console.log('processRequest: Input spreadsheets:', {
+    buildoutSpreadsheet: buildoutSpreadsheet?.sheets?.length,
+    accountDataSpreadsheet: accountDataSpreadsheet?.sheets?.length
+  });
+
   if (!buildoutSpreadsheet || !buildoutSpreadsheet.sheets) {
+    console.error('processRequest: Invalid buildoutSpreadsheet:', buildoutSpreadsheet);
     alert('Failed to load the brand buildout spreadsheet. Please check your access and try again.');
     return;
   }
   if (!accountDataSpreadsheet || !accountDataSpreadsheet.sheets) {
+    console.error('processRequest: Invalid accountDataSpreadsheet:', accountDataSpreadsheet);
     alert('Failed to load the account data spreadsheet. Please check your access and try again.');
     return;
   }
+
   const urlDataSheet = getUrlDataSheet(accountDataSpreadsheet);
+  if (!urlDataSheet) {
+    console.error('processRequest: URL Data sheet not found');
+    alert('Failed to find URL Data sheet. Please check the spreadsheet structure.');
+    return;
+  }
+
   let spreadsheets = [];
-
   const managerSheet = getManagerSheet(accountDataSpreadsheet, MANAGER);
+  if (!managerSheet) {
+    console.error('processRequest: managerSheet is null or undefined');
+    alert('Failed to get manager sheet data. Please try again.');
+    return;
+  }
 
+  console.log('processRequest: Processing accounts:', accounts);
   for(let i = 0; i < accounts.length; i++) {
+    console.log('processRequest: Creating buildout spreadsheet for account:', accounts[i]);
     const accountBuildoutSpreadsheet = await createAccountBuildoutSpreadsheet(buildoutSpreadsheet, managerSheet, urlDataSheet, accounts[i]);
+    if (!accountBuildoutSpreadsheet) {
+      console.error('processRequest: createAccountBuildoutSpreadsheet returned null for account:', accounts[i]);
+      continue;
+    }
+    console.log('processRequest: Successfully created buildout spreadsheet for account:', accounts[i], 'with sheets:', accountBuildoutSpreadsheet.sheets?.length);
     spreadsheets.push(accountBuildoutSpreadsheet);
   }
 
+  console.log('processRequest: Created', spreadsheets.length, 'spreadsheets');
+  if (spreadsheets.length === 0) {
+    console.error('processRequest: No spreadsheets were created successfully');
+    alert('No spreadsheets could be created. Please check the console for details.');
+    return;
+  }
+
   for(let i = 0; i < spreadsheets.length; i++) {
+    console.log('processRequest: Creating new document for spreadsheet', i, ':', {
+      hasSheets: !!spreadsheets[i]?.sheets,
+      sheetCount: spreadsheets[i]?.sheets?.length,
+      firstSheetTitle: spreadsheets[i]?.sheets?.[0]?.properties?.title
+    });
+    if (!spreadsheets[i]) {
+      console.error('processRequest: spreadsheet at index', i, 'is undefined');
+      continue;
+    }
     const newSpreadsheet = await createNewDocument(spreadsheets[i]);
     if (newSpreadsheet) {
       const url = newSpreadsheet.spreadsheetUrl;
@@ -287,6 +329,26 @@ function getThirdLevelDomainFromSheet(sheet, account) {
 }
 
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
+  console.log('createAccountBuildoutSpreadsheet: Starting for account:', account);
+  console.log('createAccountBuildoutSpreadsheet: Input sheets:', {
+    keywordSpreadsheet: keywordSpreadsheet?.sheets?.length,
+    adCopySheet: adCopySheet?.properties?.title,
+    urlDataSheet: urlDataSheet?.properties?.title
+  });
+
+  if (!keywordSpreadsheet || !keywordSpreadsheet.sheets) {
+    console.error('createAccountBuildoutSpreadsheet: Invalid keywordSpreadsheet:', keywordSpreadsheet);
+    return null;
+  }
+  if (!adCopySheet || !adCopySheet.data) {
+    console.error('createAccountBuildoutSpreadsheet: Invalid adCopySheet:', adCopySheet);
+    return null;
+  }
+  if (!urlDataSheet || !urlDataSheet.data) {
+    console.error('createAccountBuildoutSpreadsheet: Invalid urlDataSheet:', urlDataSheet);
+    return null;
+  }
+
   const rawHeaderRow = [
     "Campaign", "Ad Group", "Keyword", "Criterion Type", "Final URL", "Labels", "Ad type", "Status", "Description Line 1", "Description Line 2",
     "Headline 1", "Headline 1 position", "Headline 2", "Headline 3", "Path 1",
@@ -297,6 +359,14 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   let masterSpreadsheet = createSpreadSheet(account+ " Buildout", rawHeaderRow);
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
   const campaigns = getAccountCampaignsFromSheet(adCopySheet, account);
+
+  console.log('createAccountBuildoutSpreadsheet: Found languages:', languages);
+  console.log('createAccountBuildoutSpreadsheet: Found campaigns:', campaigns);
+
+  if (!languages.length || !campaigns.length) {
+    console.error('createAccountBuildoutSpreadsheet: No languages or campaigns found for account:', account);
+    return null;
+  }
 
   //for every brand
   for (let i = 0; i < keywordSpreadsheet.sheets.length; i++) {
@@ -444,6 +514,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
       }
     }
   }
+  console.log('createAccountBuildoutSpreadsheet: Successfully created spreadsheet for account:', account);
   return masterSpreadsheet;
 }
 
@@ -603,18 +674,86 @@ async function fetchSpreadsheetSingleManager(url, manager) {
 }
 
 function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
-  if (!fetchedSpreadsheet || !fetchedSpreadsheet.sheets) {
-    console.error("transformFetchedSpreadsheetToCreationFormat: Invalid fetched spreadsheet (missing .sheets).");
+  console.log('transformFetchedSpreadsheetToCreationFormat: Input:', fetchedSpreadsheet);
+  
+  if (!fetchedSpreadsheet) {
+    console.error("transformFetchedSpreadsheetToCreationFormat: Input spreadsheet is null or undefined");
     return null;
   }
-  // Create a new object with properties and a sheets array (each sheet has a .data property).
+
+  // If it's already in the correct format, return it as is
+  if (Array.isArray(fetchedSpreadsheet.sheets) && 
+      fetchedSpreadsheet.sheets.length > 0 && 
+      fetchedSpreadsheet.sheets[0].data) {
+    console.log('transformFetchedSpreadsheetToCreationFormat: Spreadsheet already in correct format');
+    return fetchedSpreadsheet;
+  }
+
+  // Create a new object with the required structure
   const creationSpreadsheet = {
-    properties: { title: fetchedSpreadsheet.properties?.title || "Untitled" },
-    sheets: fetchedSpreadsheet.sheets.map(sheet => ({
-      properties: { title: sheet.properties?.title || "Sheet1" },
-      data: sheet.data || []
-    }))
+    properties: {
+      title: fetchedSpreadsheet.properties?.title || "Untitled"
+    },
+    sheets: []
   };
+
+  // If we have sheets data, transform it
+  if (fetchedSpreadsheet.sheets) {
+    creationSpreadsheet.sheets = fetchedSpreadsheet.sheets.map(sheet => {
+      const transformedSheet = {
+        properties: {
+          title: sheet.properties?.title || "Sheet1",
+          sheetId: sheet.properties?.sheetId || 0,
+          index: sheet.properties?.index || 0,
+          sheetType: "GRID",
+          gridProperties: {
+            rowCount: 1000,
+            columnCount: 26
+          }
+        },
+        data: []
+      };
+
+      // If the sheet has data, include it
+      if (sheet.data) {
+        transformedSheet.data = sheet.data.map(gridData => ({
+          rowData: gridData.rowData || [],
+          startRow: gridData.startRow || 0,
+          startColumn: gridData.startColumn || 0
+        }));
+      } else {
+        // If no data, create an empty data array
+        transformedSheet.data = [{
+          rowData: [],
+          startRow: 0,
+          startColumn: 0
+        }];
+      }
+
+      return transformedSheet;
+    });
+  } else {
+    // If no sheets data, create a default sheet
+    creationSpreadsheet.sheets = [{
+      properties: {
+        title: "Sheet1",
+        sheetId: 0,
+        index: 0,
+        sheetType: "GRID",
+        gridProperties: {
+          rowCount: 1000,
+          columnCount: 26
+        }
+      },
+      data: [{
+        rowData: [],
+        startRow: 0,
+        startColumn: 0
+      }]
+    }];
+  }
+
+  console.log('transformFetchedSpreadsheetToCreationFormat: Output:', creationSpreadsheet);
   return creationSpreadsheet;
 }
 
@@ -764,27 +903,52 @@ async function createNewDocument(spreadsheet) {
     console.error("createNewDocument: spreadsheet is null or undefined.");
     return null;
   }
-  // Transform if not in creation format
+
+  // Transform if needed
   if (!Array.isArray(spreadsheet.sheets) || (spreadsheet.sheets.length > 0 && !spreadsheet.sheets[0].data)) {
-    console.warn("createNewDocument: spreadsheet does not have a .sheets array (or its sheets do not have a .data property). Transforming using transformFetchedSpreadsheetToCreationFormat.");
-    spreadsheet = transformFetchedSpreadsheetToCreationFormat(spreadsheet);
-    if (!spreadsheet) {
+    console.warn("createNewDocument: Transforming spreadsheet format");
+    const transformedSpreadsheet = transformFetchedSpreadsheetToCreationFormat(spreadsheet);
+    if (!transformedSpreadsheet) {
       alert("createNewDocument: transformation failed. Cannot create new document.");
       console.error("createNewDocument: transformation failed.");
       return null;
     }
+    spreadsheet = transformedSpreadsheet;
   }
-  const firstSheet = spreadsheet.sheets[0];
-  console.log('First sheet object (after transformation if needed):', firstSheet);
-  if (!firstSheet) {
-    alert("createNewDocument: first sheet is undefined. Cannot create new document.");
-    console.error("createNewDocument: first sheet is undefined.");
+
+  // Validate the spreadsheet structure
+  if (!Array.isArray(spreadsheet.sheets) || spreadsheet.sheets.length === 0) {
+    console.error("createNewDocument: Invalid spreadsheet structure after transformation:", spreadsheet);
+    alert("Failed to create spreadsheet: Invalid structure");
     return null;
   }
-  let res = null;
-  await gapi.client.sheets.spreadsheets.create(spreadsheet)
-    .then((response) => { res = response.result; });
-  return res;
+
+  const firstSheet = spreadsheet.sheets[0];
+  console.log('First sheet object (after transformation if needed):', firstSheet);
+  
+  if (!firstSheet || !firstSheet.properties || !firstSheet.data) {
+    console.error("createNewDocument: Invalid first sheet structure:", firstSheet);
+    alert("Failed to create spreadsheet: Invalid sheet structure");
+    return null;
+  }
+
+  try {
+    let res = null;
+    await gapi.client.sheets.spreadsheets.create(spreadsheet)
+      .then((response) => { 
+        res = response.result;
+        console.log('createNewDocument: Successfully created spreadsheet:', res);
+      })
+      .catch((error) => {
+        console.error('createNewDocument: Error creating spreadsheet:', error);
+        throw error;
+      });
+    return res;
+  } catch (error) {
+    console.error('createNewDocument: Exception creating spreadsheet:', error);
+    alert("Failed to create spreadsheet: " + (error.message || "Unknown error"));
+    return null;
+  }
 }
 
 function createSpreadSheet(title, headers) {
