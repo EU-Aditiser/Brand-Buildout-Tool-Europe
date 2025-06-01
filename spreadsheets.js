@@ -744,6 +744,12 @@ async function createNewDocument(spreadsheet) {
     console.error('Spreadsheet object:', spreadsheet);
     return null;
   }
+  const firstSheet = spreadsheet.sheets[0];
+  console.log('First sheet object:', firstSheet);
+  if (!firstSheet) {
+    alert('First sheet is undefined. Cannot create new document.');
+    return null;
+  }
   let res = null;
 
   await gapi.client.sheets.spreadsheets.create(spreadsheet)
