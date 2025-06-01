@@ -223,6 +223,10 @@ function handleCredentialResponse(response) {
     document.getElementById('g_id_signin').style.display = 'none';
     // Store the credential (JWT) for your app logic
     accessToken = response.credential;
+    // If using gapi.client for Sheets API, set the access token
+    if (window.gapi && gapi.client && gapi.client.setToken) {
+      gapi.client.setToken({access_token: accessToken});
+    }
     // Initialize GAPI client after sign-in
     initializeGapiClient().then(() => {
       console.log("GAPI client initialized");
