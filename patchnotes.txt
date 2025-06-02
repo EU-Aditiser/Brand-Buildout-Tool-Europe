@@ -1,7 +1,5 @@
-May 2023 Patch Notes
+Jun 2025 Patch Notes
 
+- The spreadsheet header row now supports reading and writing Headline 1–15.
 
-- The spreadsheet header row now includes Headline 1–15 and their positions.
-- Ad row construction now extracts and inserts up to 15 headlines and their positions.
-- The field length check now validates all 15 headlines for the 40-character limit.
-- The ad group row data function now matches the new column count.
+- Audience segments can now be added for Broad campaigns.
