@@ -260,6 +260,17 @@ window.onload = function() {
   document.getElementById('custom-google-signin').onclick = function() {
     gisLoaded();
   };
+
+  // Dynamically load patch notes from patchnotes.txt
+  fetch('patchnotes.txt')
+    .then(response => response.text())
+    .then(text => {
+      document.getElementById('patch_notes').textContent = text;
+    })
+    .catch(err => {
+      document.getElementById('patch_notes').textContent = 'Unable to load patch notes.';
+      console.error('Failed to load patchnotes.txt:', err);
+    });
 };
 
 // Update the account buildout button click handler
