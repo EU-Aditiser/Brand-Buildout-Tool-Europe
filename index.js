@@ -265,7 +265,9 @@ window.onload = function() {
   fetch('patchnotes.txt')
     .then(response => response.text())
     .then(text => {
-      document.getElementById('patch_notes').textContent = text;
+      // Replace newline characters with HTML break tags for proper formatting
+      const formattedText = text.replace(/\n/g, '<br>');
+      document.getElementById('patch_notes').innerHTML = formattedText;
     })
     .catch(err => {
       document.getElementById('patch_notes').textContent = 'Unable to load patch notes.';
