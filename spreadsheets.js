@@ -712,7 +712,7 @@ async function fetchSpreadsheet(url) {
 async function fetchSpreadsheetSingleManager(url, manager) {
   const spreadsheetId = getDocumentIdFromUrl(url);
   // Update range to include all columns up to AH (column 34) to cover all headlines and descriptions
-  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AH2000')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
+  const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AH100')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
   if (!window.accessToken) {
     alert("Google access token not available. Please sign in again.");
     return null;

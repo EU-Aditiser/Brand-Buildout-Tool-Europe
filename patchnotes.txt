@@ -4,6 +4,6 @@ Jun 2025 Patch Notes
 
 - Audience segments can now be added for Broad campaigns.
 
-- Increased row processing capacity from 150 to 2000 rows for improved scalability and performance.
+- Reduced row processing limit to 100 to improve performance speed.
 
 - Increased column processing capacity from Z to AH columns to support wider datasets and improve scalability.
