@@ -125,6 +125,21 @@ async function handleAccountBuildoutClick(e) {
       const brandBuildoutSpreadsheet = await fetchSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
       const accountDataSpreadsheetCreate = await fetchSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
       
+      // Check if spreadsheets were fetched successfully
+      if (!brandBuildoutSpreadsheet) {
+        console.error("Failed to fetch brand buildout spreadsheet");
+        alert("Failed to fetch brand buildout spreadsheet. Please check the URL and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
+      
+      if (!accountDataSpreadsheetCreate) {
+        console.error("Failed to fetch account data spreadsheet");
+        alert("Failed to fetch account data spreadsheet. Please check the URL and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
+      
       try {
         const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
         if (newSheetUrl) {

@@ -145,6 +145,22 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
     accountDataSpreadsheet: accountDataSpreadsheet?.sheets?.length
   });
 
+  // Validate input spreadsheets
+  const buildoutValidation = validateSpreadsheetData(buildoutSpreadsheet, 'Brand Buildout Spreadsheet');
+  const accountDataValidation = validateSpreadsheetData(accountDataSpreadsheet, 'Account Data Spreadsheet');
+  
+  const buildoutHasIssues = displayValidationResults(buildoutValidation, 'Brand Buildout Spreadsheet');
+  const accountDataHasIssues = displayValidationResults(accountDataValidation, 'Account Data Spreadsheet');
+  
+  // Ask user if they want to continue with issues
+  if (buildoutHasIssues || accountDataHasIssues) {
+    const continueProcessing = confirm('Data validation found issues. Do you want to continue processing anyway? (This may cause errors)');
+    if (!continueProcessing) {
+      console.log('processRequest: User cancelled due to validation issues');
+      return;
+    }
+  }
+
   if (!buildoutSpreadsheet || !buildoutSpreadsheet.sheets) {
     console.error('processRequest: Invalid buildoutSpreadsheet:', buildoutSpreadsheet);
     alert('Failed to load the brand buildout spreadsheet. Please check your access and try again.');
@@ -174,13 +190,18 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
   console.log('processRequest: Processing accounts:', accounts);
   for(let i = 0; i < accounts.length; i++) {
     console.log('processRequest: Creating buildout spreadsheet for account:', accounts[i]);
-    const accountBuildoutSpreadsheet = await createAccountBuildoutSpreadsheet(buildoutSpreadsheet, managerSheet, urlDataSheet, accounts[i]);
-    if (!accountBuildoutSpreadsheet) {
-      console.error('processRequest: createAccountBuildoutSpreadsheet returned null for account:', accounts[i]);
-      continue;
+    try {
+      const accountBuildoutSpreadsheet = await createAccountBuildoutSpreadsheet(buildoutSpreadsheet, managerSheet, urlDataSheet, accounts[i]);
+      if (!accountBuildoutSpreadsheet) {
+        console.error('processRequest: createAccountBuildoutSpreadsheet returned null for account:', accounts[i]);
+        continue;
+      }
+      console.log('processRequest: Successfully created buildout spreadsheet for account:', accounts[i], 'with sheets:', accountBuildoutSpreadsheet.sheets?.length);
+      spreadsheets.push(accountBuildoutSpreadsheet);
+    } catch (error) {
+      console.error('processRequest: Error creating buildout spreadsheet for account:', accounts[i], 'Error:', error);
+      throw new Error(`Failed to create buildout spreadsheet for account ${accounts[i]}: ${error.message}`);
     }
-    console.log('processRequest: Successfully created buildout spreadsheet for account:', accounts[i], 'with sheets:', accountBuildoutSpreadsheet.sheets?.length);
-    spreadsheets.push(accountBuildoutSpreadsheet);
   }
 
   console.log('processRequest: Created', spreadsheets.length, 'spreadsheets');
@@ -423,6 +444,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   for (let i = 0; i < keywordSpreadsheet.sheets.length; i++) {
     for (let j = 0; j < languages.length; j++) {
       for (let k = 0; k < campaigns.length; k++) {
+        try {
         const language = languages[j];
         const campaign = campaigns[k]
         const sheet = keywordSpreadsheet.sheets[i];
@@ -432,10 +454,11 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         //create new copy that we can edit
         let keywordRowData = [];
         //Update third level domain and campaign title
-        for (let i = 0; i < rowData.length; i++) {
+        for (let rowIndex = 0; rowIndex < rowData.length; rowIndex++) {
           //Campaign title
-          if(isCellEmpty(rowData[i].values[0])) break;
-          let newRowData = copyRowData(rowData[i])
+          if(isCellEmpty(rowData[rowIndex].values[0])) break;
+          let newRowData = copyRowData(rowData[rowIndex])
+          
           const rawCampaignTitle = newRowData.values[0].userEnteredValue.stringValue;
           
           const accountCampaignTitle = (rawCampaignTitle + " > " + account + " > " + campaign + " (" + language + ")");
@@ -444,17 +467,33 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         }
 
         const thirdLevelDomain = getThirdLevelDomainFromSheet(urlDataSheet, account)
-        for(let i = 0; i < keywordRowData.length; i++) {
+        for(let urlIndex = 0; urlIndex < keywordRowData.length; urlIndex++) {
           //Final Url
-          if (keywordRowData[i].values.length > 4 && keywordRowData[i].values[4].hasOwnProperty('userEnteredValue')) {
-            const rawFinalURL = keywordRowData[i].values[4].userEnteredValue.stringValue;
+          if (keywordRowData[urlIndex].values.length > 4 && keywordRowData[urlIndex].values[4].hasOwnProperty('userEnteredValue')) {
+            const rawFinalURL = keywordRowData[urlIndex].values[4].userEnteredValue.stringValue;
 
-            const accountFinalURL = rawFinalURL.replace("www.", thirdLevelDomain + ".");
-            keywordRowData[i].values[4].userEnteredValue.stringValue = accountFinalURL;
+            // Handle both https://www. and www. formats
+            let accountFinalURL;
+            if (rawFinalURL.includes('https://www.')) {
+              accountFinalURL = rawFinalURL.replace('https://www.', `https://${thirdLevelDomain}.`);
+            } else if (rawFinalURL.includes('http://www.')) {
+              accountFinalURL = rawFinalURL.replace('http://www.', `http://${thirdLevelDomain}.`);
+            } else if (rawFinalURL.includes('www.')) {
+              accountFinalURL = rawFinalURL.replace('www.', `${thirdLevelDomain}.`);
+            } else {
+              // If no www. found, keep the original URL
+              accountFinalURL = rawFinalURL;
+            }
+            
+            keywordRowData[urlIndex].values[4].userEnteredValue.stringValue = accountFinalURL;
           }
         }
 
         //Ad Groups
+
+        
+
+        
         const campaignTitle = keywordRowData[0].values[0].userEnteredValue.stringValue;
         const adGroupTitle = keywordRowData[0].values[1].userEnteredValue.stringValue;
         const finalURL = keywordRowData[0].values[4].userEnteredValue.stringValue;
@@ -465,46 +504,47 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         //Ads
         //TODO
         const adCopyRowData = getAdCopyRowData(adCopySheet, account, language, campaign);
+
         const brandTitle = sheet.properties.title;
         const path = createPath(brandTitle);
         
-        for (let i = 0; i < adCopyRowData.length; i++) {
+        for (let adIndex = 0; adIndex < adCopyRowData.length; adIndex++) {
           const campaign = campaignTitle;
           const adGroup = adGroupTitle;
 
-          const labels = !isCellEmpty(adCopyRowData[i].values[4]) ? adCopyRowData[i].values[4].userEnteredValue.stringValue : "";
-          const adType = !isCellEmpty(adCopyRowData[i].values[5]) ? adCopyRowData[i].values[5].userEnteredValue.stringValue : "";
-          const status = !isCellEmpty(adCopyRowData[i].values[6]) ? adCopyRowData[i].values[6].userEnteredValue.stringValue : "";
-          const descriptionLine1 = !isCellEmpty(adCopyRowData[i].values[7]) ? adCopyRowData[i].values[7].userEnteredValue.stringValue : "";
-          const descriptionLine2 = !isCellEmpty(adCopyRowData[i].values[8]) ? adCopyRowData[i].values[8].userEnteredValue.stringValue : "";
+          const labels = !isCellEmpty(adCopyRowData[adIndex].values[4]) ? adCopyRowData[adIndex].values[4].userEnteredValue.stringValue : "";
+          const adType = !isCellEmpty(adCopyRowData[adIndex].values[5]) ? adCopyRowData[adIndex].values[5].userEnteredValue.stringValue : "";
+          const status = !isCellEmpty(adCopyRowData[adIndex].values[6]) ? adCopyRowData[adIndex].values[6].userEnteredValue.stringValue : "";
+          const descriptionLine1 = !isCellEmpty(adCopyRowData[adIndex].values[7]) ? adCopyRowData[adIndex].values[7].userEnteredValue.stringValue : "";
+          const descriptionLine2 = !isCellEmpty(adCopyRowData[adIndex].values[8]) ? adCopyRowData[adIndex].values[8].userEnteredValue.stringValue : "";
         
-          const headline1 = !isCellEmpty(adCopyRowData[i].values[9]) ? createHeadline1(brandTitle, adCopyRowData[i].values[9].userEnteredValue.stringValue) : "";
-          const headline1Position = !isCellEmpty(adCopyRowData[i].values[10])
-            ? (adCopyRowData[i].values[10].userEnteredValue.stringValue ?? adCopyRowData[i].values[10].userEnteredValue.numberValue ?? "")
+          const headline1 = !isCellEmpty(adCopyRowData[adIndex].values[9]) ? createHeadline1(brandTitle, adCopyRowData[adIndex].values[9].userEnteredValue.stringValue) : "";
+          const headline1Position = !isCellEmpty(adCopyRowData[adIndex].values[10])
+            ? (adCopyRowData[adIndex].values[10].userEnteredValue.stringValue ?? adCopyRowData[adIndex].values[10].userEnteredValue.numberValue ?? "")
             : "";
         
-          const headline2 = !isCellEmpty(adCopyRowData[i].values[11]) ? adCopyRowData[i].values[11].userEnteredValue.stringValue : "";
-          const headline3 = !isCellEmpty(adCopyRowData[i].values[12]) ? adCopyRowData[i].values[12].userEnteredValue.stringValue : "";
-          const headline4 = !isCellEmpty(adCopyRowData[i].values[13]) ? adCopyRowData[i].values[13].userEnteredValue.stringValue : "";
-          const headline5 = !isCellEmpty(adCopyRowData[i].values[14]) ? adCopyRowData[i].values[14].userEnteredValue.stringValue : "";
-          const headline6 = !isCellEmpty(adCopyRowData[i].values[15]) ? adCopyRowData[i].values[15].userEnteredValue.stringValue : "";
-          const headline7 = !isCellEmpty(adCopyRowData[i].values[16]) ? adCopyRowData[i].values[16].userEnteredValue.stringValue : "";
-          const headline8 = !isCellEmpty(adCopyRowData[i].values[17]) ? adCopyRowData[i].values[17].userEnteredValue.stringValue : "";
-          const headline9 = !isCellEmpty(adCopyRowData[i].values[18]) ? adCopyRowData[i].values[18].userEnteredValue.stringValue : "";
-          const headline10 = !isCellEmpty(adCopyRowData[i].values[19]) ? adCopyRowData[i].values[19].userEnteredValue.stringValue : "";
-          const headline11 = !isCellEmpty(adCopyRowData[i].values[20]) ? adCopyRowData[i].values[20].userEnteredValue.stringValue : "";
-          const headline12 = !isCellEmpty(adCopyRowData[i].values[21]) ? adCopyRowData[i].values[21].userEnteredValue.stringValue : "";
-          const headline13 = !isCellEmpty(adCopyRowData[i].values[22]) ? adCopyRowData[i].values[22].userEnteredValue.stringValue : "";
-          const headline14 = !isCellEmpty(adCopyRowData[i].values[23]) ? adCopyRowData[i].values[23].userEnteredValue.stringValue : "";
-          const headline15 = !isCellEmpty(adCopyRowData[i].values[24]) ? adCopyRowData[i].values[24].userEnteredValue.stringValue : "";
+          const headline2 = !isCellEmpty(adCopyRowData[adIndex].values[11]) ? adCopyRowData[adIndex].values[11].userEnteredValue.stringValue : "";
+          const headline3 = !isCellEmpty(adCopyRowData[adIndex].values[12]) ? adCopyRowData[adIndex].values[12].userEnteredValue.stringValue : "";
+          const headline4 = !isCellEmpty(adCopyRowData[adIndex].values[13]) ? adCopyRowData[adIndex].values[13].userEnteredValue.stringValue : "";
+          const headline5 = !isCellEmpty(adCopyRowData[adIndex].values[14]) ? adCopyRowData[adIndex].values[14].userEnteredValue.stringValue : "";
+          const headline6 = !isCellEmpty(adCopyRowData[adIndex].values[15]) ? adCopyRowData[adIndex].values[15].userEnteredValue.stringValue : "";
+          const headline7 = !isCellEmpty(adCopyRowData[adIndex].values[16]) ? adCopyRowData[adIndex].values[16].userEnteredValue.stringValue : "";
+          const headline8 = !isCellEmpty(adCopyRowData[adIndex].values[17]) ? adCopyRowData[adIndex].values[17].userEnteredValue.stringValue : "";
+          const headline9 = !isCellEmpty(adCopyRowData[adIndex].values[18]) ? adCopyRowData[adIndex].values[18].userEnteredValue.stringValue : "";
+          const headline10 = !isCellEmpty(adCopyRowData[adIndex].values[19]) ? adCopyRowData[adIndex].values[19].userEnteredValue.stringValue : "";
+          const headline11 = !isCellEmpty(adCopyRowData[adIndex].values[20]) ? adCopyRowData[adIndex].values[20].userEnteredValue.stringValue : "";
+          const headline12 = !isCellEmpty(adCopyRowData[adIndex].values[21]) ? adCopyRowData[adIndex].values[21].userEnteredValue.stringValue : "";
+          const headline13 = !isCellEmpty(adCopyRowData[adIndex].values[22]) ? adCopyRowData[adIndex].values[22].userEnteredValue.stringValue : "";
+          const headline14 = !isCellEmpty(adCopyRowData[adIndex].values[23]) ? adCopyRowData[adIndex].values[23].userEnteredValue.stringValue : "";
+          const headline15 = !isCellEmpty(adCopyRowData[adIndex].values[24]) ? adCopyRowData[adIndex].values[24].userEnteredValue.stringValue : "";
         
-          const description1 = !isCellEmpty(adCopyRowData[i].values[25]) ? adCopyRowData[i].values[25].userEnteredValue.stringValue : "";
-          const description1Position = !isCellEmpty(adCopyRowData[i].values[26])
-            ? (adCopyRowData[i].values[26].userEnteredValue.stringValue ?? adCopyRowData[i].values[26].userEnteredValue.numberValue ?? "")
+          const description1 = !isCellEmpty(adCopyRowData[adIndex].values[25]) ? adCopyRowData[adIndex].values[25].userEnteredValue.stringValue : "";
+          const description1Position = !isCellEmpty(adCopyRowData[adIndex].values[26])
+            ? (adCopyRowData[adIndex].values[26].userEnteredValue.stringValue ?? adCopyRowData[adIndex].values[26].userEnteredValue.numberValue ?? "")
             : "";
-          const description2 = !isCellEmpty(adCopyRowData[i].values[27]) ? adCopyRowData[i].values[27].userEnteredValue.stringValue : "";
-          const description3 = !isCellEmpty(adCopyRowData[i].values[28]) ? adCopyRowData[i].values[28].userEnteredValue.stringValue : "";
-          const description4 = !isCellEmpty(adCopyRowData[i].values[29]) ? adCopyRowData[i].values[29].userEnteredValue.stringValue : "";
+          const description2 = !isCellEmpty(adCopyRowData[adIndex].values[27]) ? adCopyRowData[adIndex].values[27].userEnteredValue.stringValue : "";
+          const description3 = !isCellEmpty(adCopyRowData[adIndex].values[28]) ? adCopyRowData[adIndex].values[28].userEnteredValue.stringValue : "";
+          const description4 = !isCellEmpty(adCopyRowData[adIndex].values[29]) ? adCopyRowData[adIndex].values[29].userEnteredValue.stringValue : "";
         
           const adRowValues = [
             campaign,
@@ -550,17 +590,21 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
         
         //Keywords  
         // add country specific keyword postfix
-        for(let i = 0; i < keywordRowData.length; i++) { 
-          if (!isCellEmpty(keywordRowData[i].values[4])) {
-            const rawFinalURL = keywordRowData[i].values[4].userEnteredValue.stringValue;
+        for(let keywordIndex = 0; keywordIndex < keywordRowData.length; keywordIndex++) { 
+          if (!isCellEmpty(keywordRowData[keywordIndex].values[4])) {
+            const rawFinalURL = keywordRowData[keywordIndex].values[4].userEnteredValue.stringValue;
             
             const rawPostfix = getPostfixFromSheet(urlDataSheet, account, language);
             const postfix = (rawFinalURL.indexOf('?') >= 0 ? "&" + rawPostfix : "?" + rawPostfix);
             const accountFinalURL = rawFinalURL.length < 5 ? " " : rawFinalURL + postfix;
-            keywordRowData[i].values[4].userEnteredValue.stringValue = accountFinalURL; 
+            keywordRowData[keywordIndex].values[4].userEnteredValue.stringValue = accountFinalURL; 
           } 
 
-          masterSpreadsheet.sheets[0].data[0].rowData.push(keywordRowData[i]);
+          masterSpreadsheet.sheets[0].data[0].rowData.push(keywordRowData[keywordIndex]);
+        }
+        } catch (error) {
+          console.error('createAccountBuildoutSpreadsheet: Error processing brand:', sheet.properties.title, 'campaign:', campaign, 'language:', language, 'Error:', error);
+          // Continue with next iteration instead of failing completely
         }
       }
     }
@@ -606,7 +650,7 @@ function createPath(brandTitle) {
 }
 
 function isCellEmpty(cell) {
-  return typeof cell === "undefined" || !cell.hasOwnProperty('userEnteredValue')
+  return typeof cell === "undefined" || cell === null || !cell.hasOwnProperty('userEnteredValue')
 }
 
 /**potentially hazasrdous */
@@ -688,47 +732,123 @@ async function fetchSpreadsheetNoGridData(url) {
 
 // Helper to fetch a spreadsheet with grid data using access token
 async function fetchSpreadsheet(url) {
+  console.log('fetchSpreadsheet: Starting with URL:', url);
+  
+  if (!url || url.trim() === '') {
+    console.error('fetchSpreadsheet: Empty URL provided');
+    alert('Please provide a valid spreadsheet URL.');
+    return null;
+  }
+  
   const spreadsheetId = getDocumentIdFromUrl(url);
+  console.log('fetchSpreadsheet: Extracted spreadsheetId:', spreadsheetId);
+  
+  if (!spreadsheetId) {
+    console.error('fetchSpreadsheet: Could not extract spreadsheet ID from URL:', url);
+    alert('Invalid spreadsheet URL. Please check the URL and try again.');
+    return null;
+  }
+  
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=true`;
+  console.log('fetchSpreadsheet: API URL:', apiUrl);
+  
   if (!window.accessToken) {
+    console.error('fetchSpreadsheet: No access token available');
     alert("Google access token not available. Please sign in again.");
     return null;
   }
-  const res = await fetch(apiUrl, {
-    headers: {
-      'Authorization': `Bearer ${window.accessToken}`
+  
+  try {
+    const res = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${window.accessToken}`
+      }
+    });
+    
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('fetchSpreadsheet: Sheets API error:', err);
+      alert('Sheets API error: ' + err);
+      return null;
     }
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    console.error('Sheets API error:', err);
-    alert('Sheets API error: ' + err);
+    
+    const result = await res.json();
+    console.log('fetchSpreadsheet: Successfully fetched spreadsheet:', result?.properties?.title);
+    
+    // Validate the fetched data
+    if (result && result.properties && result.properties.title) {
+      const validation = validateSpreadsheetData(result, result.properties.title);
+      if (validation.errors.length > 0 || validation.warnings.length > 0) {
+        console.warn('fetchSpreadsheet: Data validation issues detected in fetched spreadsheet');
+        displayValidationResults(validation, result.properties.title);
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('fetchSpreadsheet: Network or parsing error:', error);
+    alert('Failed to fetch spreadsheet: ' + error.message);
     return null;
   }
-  return await res.json();
 }
 
 // Helper to fetch a single manager's sheet and URL Data using access token
 async function fetchSpreadsheetSingleManager(url, manager) {
+  console.log('fetchSpreadsheetSingleManager: Starting with URL:', url, 'manager:', manager);
+  
+  if (!url || url.trim() === '') {
+    console.error('fetchSpreadsheetSingleManager: Empty URL provided');
+    alert('Please provide a valid spreadsheet URL.');
+    return null;
+  }
+  
+  if (!manager || manager.trim() === '') {
+    console.error('fetchSpreadsheetSingleManager: Empty manager provided');
+    alert('Please select a manager.');
+    return null;
+  }
+  
   const spreadsheetId = getDocumentIdFromUrl(url);
+  console.log('fetchSpreadsheetSingleManager: Extracted spreadsheetId:', spreadsheetId);
+  
+  if (!spreadsheetId) {
+    console.error('fetchSpreadsheetSingleManager: Could not extract spreadsheet ID from URL:', url);
+    alert('Invalid spreadsheet URL. Please check the URL and try again.');
+    return null;
+  }
+  
   // Update range to include all columns up to AH (column 34) to cover all headlines and descriptions
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AH100')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
+  console.log('fetchSpreadsheetSingleManager: API URL:', apiUrl);
+  
   if (!window.accessToken) {
+    console.error('fetchSpreadsheetSingleManager: No access token available');
     alert("Google access token not available. Please sign in again.");
     return null;
   }
-  const res = await fetch(apiUrl, {
-    headers: {
-      'Authorization': `Bearer ${window.accessToken}`
+  
+  try {
+    const res = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${window.accessToken}`
+      }
+    });
+    
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('fetchSpreadsheetSingleManager: Sheets API error:', err);
+      alert('Sheets API error: ' + err);
+      return null;
     }
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    console.error('Sheets API error:', err);
-    alert('Sheets API error: ' + err);
+    
+    const result = await res.json();
+    console.log('fetchSpreadsheetSingleManager: Successfully fetched spreadsheet:', result?.properties?.title);
+    return result;
+  } catch (error) {
+    console.error('fetchSpreadsheetSingleManager: Network or parsing error:', error);
+    alert('Failed to fetch spreadsheet: ' + error.message);
     return null;
   }
-  return await res.json();
 }
 
 function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
@@ -1239,4 +1359,159 @@ function createAccountHtml(accounts) {
     html += template;
   }
   return html;
+}
+
+// Add validation function at the top of the file
+function validateSpreadsheetData(spreadsheet, spreadsheetName) {
+  console.log(`Validating spreadsheet: ${spreadsheetName}`);
+  
+  if (!spreadsheet || !spreadsheet.sheets) {
+    return {
+      isValid: false,
+      errors: [`${spreadsheetName}: Invalid spreadsheet structure - missing sheets property`]
+    };
+  }
+
+  const warnings = [];
+  const errors = [];
+  const problematicSheets = [];
+  const problematicCells = [];
+
+  for (let sheetIndex = 0; sheetIndex < spreadsheet.sheets.length; sheetIndex++) {
+    const sheet = spreadsheet.sheets[sheetIndex];
+    const sheetName = sheet.properties?.title || `Sheet${sheetIndex + 1}`;
+    
+    if (!sheet.data || !sheet.data[0] || !sheet.data[0].rowData) {
+      errors.push(`${spreadsheetName} - ${sheetName}: Missing row data`);
+      problematicSheets.push(sheetName);
+      continue;
+    }
+
+    const rowData = sheet.data[0].rowData;
+    
+    for (let rowIndex = 0; rowIndex < rowData.length; rowIndex++) {
+      const row = rowData[rowIndex];
+      
+      if (!row || !row.values) {
+        warnings.push(`${spreadsheetName} - ${sheetName} Row ${rowIndex + 1}: Missing values array`);
+        problematicCells.push(`${sheetName}!A${rowIndex + 1}`);
+        continue;
+      }
+
+      for (let colIndex = 0; colIndex < row.values.length; colIndex++) {
+        const cell = row.values[colIndex];
+        
+        // Check for formula cells
+        if (cell && cell.userEnteredValue && cell.userEnteredValue.formulaValue) {
+          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Contains formula "${cell.userEnteredValue.formulaValue}" - should use Paste Values Only`);
+          problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+        }
+        
+        // Check for cells with unexpected data types
+        if (cell && cell.userEnteredValue) {
+          const value = cell.userEnteredValue;
+          if (value.numberValue !== undefined && value.stringValue !== undefined) {
+            warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Mixed data types detected`);
+            problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+          }
+        }
+        
+        // Check for cells with special formatting that might cause issues
+        if (cell && cell.userEnteredFormat && cell.userEnteredFormat.numberFormat) {
+          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Has number formatting - may cause parsing issues`);
+          problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+        }
+      }
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+    problematicSheets,
+    problematicCells,
+    summary: {
+      totalSheets: spreadsheet.sheets.length,
+      problematicSheetsCount: problematicSheets.length,
+      problematicCellsCount: problematicCells.length,
+      errorCount: errors.length,
+      warningCount: warnings.length
+    }
+  };
+}
+
+function displayValidationResults(validation, spreadsheetName) {
+  const hasIssues = validation.errors.length > 0 || validation.warnings.length > 0;
+  
+  if (hasIssues) {
+    console.warn(`=== VALIDATION RESULTS FOR ${spreadsheetName} ===`);
+    console.warn(`Summary: ${validation.summary.totalSheets} sheets, ${validation.summary.problematicSheetsCount} problematic sheets, ${validation.summary.problematicCellsCount} problematic cells`);
+    
+    if (validation.errors.length > 0) {
+      console.error('❌ ERRORS:');
+      validation.errors.forEach(error => console.error(`  - ${error}`));
+    }
+    
+    if (validation.warnings.length > 0) {
+      console.warn('⚠️  WARNINGS:');
+      validation.warnings.forEach(warning => console.warn(`  - ${warning}`));
+    }
+    
+    if (validation.problematicSheets.length > 0) {
+      console.warn('📋 Problematic Sheets:');
+      validation.problematicSheets.forEach(sheet => console.warn(`  - ${sheet}`));
+    }
+    
+    if (validation.problematicCells.length > 0) {
+      console.warn('📍 Problematic Cells (first 20):');
+      validation.problematicCells.slice(0, 20).forEach(cell => console.warn(`  - ${cell}`));
+      if (validation.problematicCells.length > 20) {
+        console.warn(`  ... and ${validation.problematicCells.length - 20} more cells`);
+      }
+    }
+    
+    // Show user-friendly alert with guidance
+    const guidance = getDataIssueGuidance(validation);
+    const message = `Data validation issues found in ${spreadsheetName}:\n\n` +
+      `• ${validation.summary.errorCount} errors\n` +
+      `• ${validation.summary.warningCount} warnings\n` +
+      `• ${validation.summary.problematicSheetsCount} problematic sheets\n` +
+      `• ${validation.summary.problematicCellsCount} problematic cells\n\n` +
+      `${guidance}\n\n` +
+      `Check the console for detailed cell locations.`;
+    
+    alert(message);
+  } else {
+    console.log(`✅ ${spreadsheetName}: All data validated successfully`);
+  }
+  
+  return hasIssues;
+}
+
+function getDataIssueGuidance(validation) {
+  const guidance = [];
+  
+  if (validation.problematicCells.length > 0) {
+    guidance.push('🔧 FIXES NEEDED:');
+    guidance.push('1. Select all data in your source spreadsheet');
+    guidance.push('2. Copy (Cmd+C)');
+    guidance.push('3. In the target spreadsheet, use "Paste Values Only" (Cmd+Shift+V)');
+    guidance.push('4. This removes formulas and formatting that cause parsing issues');
+  }
+  
+  if (validation.errors.length > 0) {
+    guidance.push('🚨 CRITICAL ISSUES:');
+    guidance.push('- Some sheets are missing required data structure');
+    guidance.push('- Check that all sheets have proper headers and data');
+  }
+  
+  if (validation.warnings.length > 0) {
+    guidance.push('⚠️  RECOMMENDATIONS:');
+    guidance.push('- Review cells with formulas or special formatting');
+    guidance.push('- Ensure all data is in plain text format');
+    guidance.push('- Remove any conditional formatting that might interfere');
+  }
+  
+  return guidance.join('\n');
 }
