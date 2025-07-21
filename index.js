@@ -92,10 +92,7 @@ function updateAuthUI(isAuthenticated) {
   
   if (isAuthenticated) {
     signInBtn.innerHTML = `
-      <div class="d-flex align-items-center gap-2">
-        <span class="text-success">✓ You're signed in</span>
-        <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Sign Out</button>
-      </div>
+      <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Sign Out</button>
     `;
     buildoutButtonSpan.textContent = 'Get Manager Data';
     if (accountBuildoutButton) {
