@@ -45,8 +45,8 @@ async function initGoogleApiClient() {
     });
     
     await gapi.client.init({
-      apiKey: 'AIzaSyBxGQoJbfA9K2m8ZQZQZQZQZQZQZQZQZQZQ', // Replace with your actual API key
-      discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+      apiKey: API_KEY,
+      discoveryDocs: DISCOVERY_DOCS
     });
     
     gapiInitialized = true;
@@ -128,8 +128,8 @@ async function signIn() {
     
     // Create token client
     const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // Replace with your actual client ID
-      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      client_id: CLIENT_ID,
+      scope: SCOPES,
       callback: handleTokenResponse
     });
     
