@@ -1026,14 +1026,44 @@ function createUpdateCellsRequest(sheetId, index, values) {
 /**
  * Batch update wrapper
  */
-function batchUpdate(spreadsheetId, requests) {
-  gapi.client.sheets.spreadsheets.batchUpdate({
-    spreadsheetId                        
-  }, {
-    requests
-  }).then((response) => {
-    // Batch update completed
-  });
+async function batchUpdate(spreadsheetId, requests) {
+  // Get the latest access token
+  let token = null;
+  if (typeof getCurrentAccessToken === 'function') {
+    token = getCurrentAccessToken();
+  } else if (window.accessToken) {
+    token = window.accessToken;
+  } else if (localStorage.getItem('googleAccessToken')) {
+    token = localStorage.getItem('googleAccessToken');
+  }
+
+  if (!token) {
+    alert('Google access token not available. Please sign in again.');
+    throw new Error('No access token available for Google Sheets API.');
+  }
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({requests})
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('batchUpdate: Sheets API error:', err);
+      throw new Error('Failed to batch update spreadsheet: ' + err);
+    }
+    // Optionally handle response
+    // const result = await res.json();
+    // return result;
+  } catch (error) {
+    console.error('batchUpdate: Error updating spreadsheet:', error);
+    throw new Error('Failed to batch update spreadsheet: ' + (error.message || 'Unknown error'));
+  }
 }
 function copyRowData(row) {
   let values = [];
@@ -1135,7 +1165,6 @@ async function createNewDocument(spreadsheet) {
           }
         }
       };
-
       // Add data if it exists, ensuring proper structure
       if (sheet.data && sheet.data.length > 0) {
         apiSheet.data = sheet.data.map(data => {
@@ -1156,7 +1185,6 @@ async function createNewDocument(spreadsheet) {
             }
             return { ...row, values };
           });
-
           return {
             rowData,
             startRow: data.startRow || 0,
@@ -1164,38 +1192,50 @@ async function createNewDocument(spreadsheet) {
           };
         });
       }
-
       return apiSheet;
     })
   };
 
-  // Attempting to create spreadsheet
+  // --- TOKEN HANDLING ---
+  let token = null;
+  if (typeof getCurrentAccessToken === 'function') {
+    token = getCurrentAccessToken();
+  } else if (window.accessToken) {
+    token = window.accessToken;
+  } else if (localStorage.getItem('googleAccessToken')) {
+    token = localStorage.getItem('googleAccessToken');
+  }
 
+  if (!token) {
+    alert('Google access token not available. Please sign in again.');
+    throw new Error('No access token available for Google Sheets API.');
+  }
+
+  // --- API CALL ---
   try {
-    const response = await gapi.client.sheets.spreadsheets.create({
-      resource: apiSpreadsheet
+    // Use fetch to ensure Authorization header is set
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(apiSpreadsheet)
     });
 
-    if (response.status === 200 && response.result) {
-      // Successfully created spreadsheet
-      return response.result.spreadsheetUrl;
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('createNewDocument: Sheets API error:', err);
+      throw new Error('Failed to create spreadsheet: ' + err);
+    }
+    const result = await res.json();
+    if (result && result.spreadsheetUrl) {
+      return result.spreadsheetUrl;
     } else {
-      console.error('createNewDocument: Unexpected response:', response);
-      throw new Error('Failed to create spreadsheet: Unexpected response from API');
+      throw new Error('Failed to create spreadsheet: No spreadsheetUrl in response');
     }
   } catch (error) {
     console.error('createNewDocument: Error creating spreadsheet:', error);
-    if (error.body) {
-      try {
-        const errorDetails = JSON.parse(error.body);
-        console.error('createNewDocument: API Error details:', errorDetails);
-        if (errorDetails.error?.message) {
-          throw new Error(`Failed to create spreadsheet: ${errorDetails.error.message}`);
-        }
-      } catch (e) {
-        console.error('createNewDocument: Error parsing error details:', e);
-      }
-    }
     throw new Error('Failed to create spreadsheet: ' + (error.message || 'Unknown error'));
   }
 }
