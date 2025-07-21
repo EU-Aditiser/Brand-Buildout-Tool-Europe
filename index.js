@@ -4,477 +4,427 @@
 const createBrandBuildoutTemplateButton = document.getElementById('create_brand_buildout_template_button');
 const accountBuildoutButton = document.getElementById('create_account_buildout_button');
 
+// Global variables
 let BUTTON_STATE = "GET_MANAGER_DATA";
-let MANAGER = "";
-updateButtonState(BUTTON_STATE);
-
 let ACCOUNTS = [];
+let MANAGER = "";
 let accessToken = null;
+let gapiInitialized = false;
 
-// Unified authentication management
-function updateAuthState(token) {
-  accessToken = token;
-  window.accessToken = token;
+// DOM elements
+const signInBtn = document.getElementById('g_id_signin');
+const buildoutButtonSpan = document.getElementById('buildout_button');
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('=== APPLICATION STARTING ===');
   
-  const signInBtn = document.getElementById('g_id_signin');
-  if (!signInBtn) {
-    console.error('Sign-in button container not found');
-    return;
-  }
+  // Initialize Google API client
+  initGoogleApiClient();
   
-  if (token) {
-    localStorage.setItem('accessToken', token);
-    // Update button to show "You're signed in" with sign-out option
-    signInBtn.innerHTML = `
-      <div class="d-flex gap-2 align-items-center">
-        <button class="btn btn-success" disabled>✓ You're signed in</button>
-        <button id="sign-out-btn" class="btn btn-outline-secondary btn-sm">Sign Out</button>
-      </div>
-    `;
+  // Check for existing authentication
+  checkExistingAuth();
+  
+  // Set up event listeners
+  setupEventListeners();
+  
+  // Load patch notes
+  loadPatchNotes();
+});
+
+// Initialize Google API Client
+async function initGoogleApiClient() {
+  try {
+    console.log('Initializing Google API Client...');
     
-    // Add sign-out functionality
-    const signOutBtn = document.getElementById('sign-out-btn');
-    if (signOutBtn) {
-      signOutBtn.onclick = function() {
-        signOut();
-      };
-    }
+    await new Promise((resolve, reject) => {
+      gapi.load('client', {
+        callback: resolve,
+        onerror: reject
+      });
+    });
     
-    // Authentication successful
-  } else {
-    localStorage.removeItem('accessToken');
-    // Update button to show "Sign in with Google"
-    signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
-    const newButton = document.getElementById('custom-google-signin');
-    if (newButton) {
-      newButton.onclick = function() {
-        gisLoaded();
-      };
-    }
+    await gapi.client.init({
+      apiKey: 'AIzaSyBxGQoJbfA9K2m8ZQZQZQZQZQZQZQZQZQZQ', // Replace with your actual API key
+      discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+    });
     
-    // Authentication cleared
+    gapiInitialized = true;
+    console.log('Google API Client initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Google API Client:', error);
   }
 }
 
-// Add sign-out function
-function signOut() {
-  // Clear all authentication data
-  accessToken = null;
-  window.accessToken = null;
-  localStorage.removeItem('accessToken');
+// Check for existing authentication
+function checkExistingAuth() {
+  console.log('Checking for existing authentication...');
   
-  // Update UI to show sign-in button
-  updateAuthState(null);
+  // Check localStorage for token
+  const storedToken = localStorage.getItem('googleAccessToken');
+  const tokenExpiry = localStorage.getItem('googleTokenExpiry');
   
-  // Reset any error states
-  const errorDiv = document.getElementById('signin-error');
-  if (errorDiv) {
-    errorDiv.style.display = 'none';
+  if (storedToken && tokenExpiry) {
+    const now = Date.now();
+    const expiry = parseInt(tokenExpiry);
+    
+    if (now < expiry) {
+      // Token is still valid
+      accessToken = storedToken;
+      updateAuthUI(true);
+      console.log('Found valid stored token');
+      return;
+    } else {
+      // Token expired, clear it
+      console.log('Stored token expired, clearing...');
+      clearStoredAuth();
+    }
   }
   
-  // Successfully signed out
+  // No valid token found
+  updateAuthUI(false);
+  console.log('No valid authentication found');
+}
+
+// Update authentication UI
+function updateAuthUI(isAuthenticated) {
+  const accountBuildoutButton = document.getElementById('create_account_buildout_button');
+  
+  if (isAuthenticated) {
+    signInBtn.innerHTML = `
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-success">✓ You're signed in</span>
+        <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Sign Out</button>
+      </div>
+    `;
+    buildoutButtonSpan.textContent = 'Get Manager Data';
+    if (accountBuildoutButton) {
+      accountBuildoutButton.disabled = false;
+    }
+  } else {
+    signInBtn.innerHTML = `
+      <button class="btn btn-outline-primary" onclick="signIn()">
+        Sign in with Google
+      </button>
+    `;
+    buildoutButtonSpan.textContent = 'Sign in to continue';
+    if (accountBuildoutButton) {
+      accountBuildoutButton.disabled = true;
+    }
+  }
+}
+
+// Sign in function
+async function signIn() {
+  try {
+    console.log('Starting sign in process...');
+    
+    // Initialize Google Identity Services
+    if (typeof google === 'undefined' || !google.accounts) {
+      console.error('Google Identity Services not loaded');
+      alert('Google Identity Services not available. Please refresh the page and try again.');
+      return;
+    }
+    
+    // Create token client
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // Replace with your actual client ID
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      callback: handleTokenResponse
+    });
+    
+    // Request token
+    tokenClient.requestAccessToken();
+    
+  } catch (error) {
+    console.error('Sign in error:', error);
+    alert('Sign in failed: ' + error.message);
+  }
+}
+
+// Handle token response
+function handleTokenResponse(response) {
+  console.log('Token response received:', response);
+  
+  if (response.error) {
+    console.error('Token error:', response.error);
+    alert('Authentication failed: ' + response.error);
+    return;
+  }
+  
+  // Store token and expiry
+  accessToken = response.access_token;
+  const expiry = Date.now() + (response.expires_in * 1000);
+  
+  localStorage.setItem('googleAccessToken', accessToken);
+  localStorage.setItem('googleTokenExpiry', expiry.toString());
+  
+  // Update UI
+  updateAuthUI(true);
+  
+  console.log('Authentication successful');
+}
+
+// Sign out function
+function signOut() {
+  console.log('Signing out...');
+  
+  // Clear stored data
+  clearStoredAuth();
+  
+  // Update UI
+  updateAuthUI(false);
+  
+  // Reset application state
+  BUTTON_STATE = "GET_MANAGER_DATA";
+  ACCOUNTS = [];
+  MANAGER = "";
+  
+  // Clear forms
+  document.getElementById("accounts_form").innerHTML = "";
+  updateButtonState(BUTTON_STATE);
+  
+  console.log('Sign out complete');
+}
+
+// Clear stored authentication
+function clearStoredAuth() {
+  localStorage.removeItem('googleAccessToken');
+  localStorage.removeItem('googleTokenExpiry');
+  accessToken = null;
 }
 
 // Check if user is authenticated
 function isAuthenticated() {
-  const token = getCurrentAccessToken();
-  return !!token;
+  return accessToken !== null;
 }
 
-// Get the current access token
+// Get current access token
 function getCurrentAccessToken() {
-  // First check memory, then localStorage
-  if (accessToken) {
-    return accessToken;
-  }
-  
-  const storedToken = localStorage.getItem('accessToken');
-  if (storedToken) {
-    // Restore token to memory
-    accessToken = storedToken;
-    window.accessToken = storedToken;
-    return storedToken;
-  }
-  
-  return null;
+  return accessToken;
 }
 
-// Stub for isTokenExpired to prevent ReferenceError
-function isTokenExpired() {
-  // TODO: Implement real token expiration check if needed
-  return false;
+// Set up event listeners
+function setupEventListeners() {
+  // Account buildout button
+  const accountBuildoutButton = document.getElementById('create_account_buildout_button');
+  if (accountBuildoutButton) {
+    accountBuildoutButton.addEventListener('click', handleAccountBuildoutClick);
+  }
+  
+  // Create brand template button
+  const createButton = document.getElementById('create_brand_buildout_template_button');
+  if (createButton) {
+    createButton.addEventListener('click', handleCreateBrandTemplateBuildoutClick);
+  }
 }
 
-/**
- * 
- * Create Brand Template on Click 
- */
-async function handleCreateBrandTemplateBuildoutClick(e) {
+// Handle account buildout button click
+async function handleAccountBuildoutClick() {
   try {
-    // Check authentication first
+    console.log('=== ACCOUNT BUILDOUT BUTTON CLICKED ===');
+    console.log('Current state:', BUTTON_STATE);
+    console.log('Authenticated:', isAuthenticated());
+    
+    // Check authentication
     if (!isAuthenticated()) {
-      alert('You must sign in with Google before proceeding.');
+      alert('Please sign in with Google to continue.');
       return;
     }
     
-    // Check if Google API client is initialized
-    if (!gapi.client.sheets) {
+    // Ensure Google API is initialized
+    if (!gapiInitialized) {
+      console.log('Initializing Google API...');
       await initGoogleApiClient();
     }
     
-    // Ensure token is available
-    const token = getCurrentAccessToken();
-    if (!token) {
-      alert('Authentication token not found. Please sign in again.');
-      signOut();
-      return;
-    }
-    
-    // Update window.accessToken
-    window.accessToken = token;
-    
-    const formData = readBrandBuildoutTemplateData();
-
-    const spreadsheet = createBrandBuildoutTemplateSpreadsheet(formData.campaign, formData.adGroup, formData.baseKeyword, formData.finalUrl);
-
-    //create spreadsheet
-    const url = await createNewDocument(spreadsheet);
-    if (url) {
-      window.open(url, '_blank');
-    }
-  } catch (error) {
-    console.error("Error in brand template creation:", error);
-    
-    if (error.message && (error.message.includes('access token') || error.message.includes('unauthorized'))) {
-      alert('Authentication error. Please sign out and sign in again.');
-      signOut();
-    } else {
-      alert('An error occurred. Please try again.');
-    }
-  }
-}
-
-function updateButtonState(state) {
-  let button_html = ""
-  document.getElementById("buildout_button").innerHTML = button_html;
-
-  switch(state) {
-    case "GET_MANAGER_DATA":
-      button_html = `Get Manager Data`
-      break;
-    case "GET_DATA":
-      button_html = `Get Account Data`
-      break;
-    case "SELECT_DATA":
-      button_html = `Please Select At Least One Account`
-      break;
-    case "CREATE":
-      button_html = `Create`
-      break;
-    default:
-      button_html = `
-      <span class="spinner-grow spinner-grow-sm" id="create_account_buildout_loader"></span>
-          Working...
-      `
-  }
-
-  document.getElementById("buildout_button").innerHTML = button_html;
-}
-
-function readManagerSelectData() {
-  const managerSelect = document.getElementById("manager-select");
-  if (!managerSelect) {
-    alert("Manager select element not found. Please refresh the page and try again.");
-    return "";
-  }
-  const manager = managerSelect.options[managerSelect.selectedIndex].value;
-  return manager;
-}
-
-/**
- * 
- * Create Account buildouts on Click 
- */
-async function handleAccountBuildoutClick(e) {
-  try {
-    console.log('=== handleAccountBuildoutClick START ===');
-    console.log('Current BUTTON_STATE:', BUTTON_STATE);
-    
-    // Ensure authentication is still valid before proceeding
-    if (!isAuthenticated()) {
-      console.log('Authentication check failed');
-      // Authentication lost during account buildout, signing out
-      signOut();
-      return;
-    }
-    
-    // Ensure token is available for API calls
-    const token = getCurrentAccessToken();
-    if (token) {
-      window.accessToken = token;
-      console.log('Token synchronized in handleAccountBuildoutClick');
-    } else {
-      console.error('No token available in handleAccountBuildoutClick');
-    }
-  
-  switch(BUTTON_STATE) {
-    case "GET_MANAGER_DATA":
-      updateButtonState("")
-
-      const managerFormData = readAccountBuildoutData();
-      console.log('Manager form data:', managerFormData);
-      
-      console.log('About to fetch spreadsheet with URL:', managerFormData.accountDataSpreadsheetURL);
-      const managerDataSpreadsheet = await fetchSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
-      console.log('Manager data spreadsheet response:', managerDataSpreadsheet);
-      
-      // Check if spreadsheet was fetched successfully
-      if (!managerDataSpreadsheet) {
-        console.error("Failed to fetch manager data spreadsheet");
-        alert("Failed to fetch manager data spreadsheet. Please check the URL and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      console.log('About to get managers from spreadsheet...');
-      const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
-      console.log('Managers found:', managers);
-      
-      if (!managers || managers.length === 0) {
-        alert("No managers found in the spreadsheet. Please check the data and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      const managerHtml = createManagerHtml(managers)
-      document.getElementById("accounts_form").innerHTML = managerHtml;
-     
-      BUTTON_STATE = "GET_DATA";
-      updateButtonState(BUTTON_STATE)
-
-      break;
-    case "GET_DATA":
-      updateButtonState("");
-      const formData = readAccountBuildoutData();
-
-      const manager = readManagerSelectData();
-      if (!manager) {
-        alert("Please select a manager before proceeding.");
-        updateButtonState(BUTTON_STATE);
+    // Process based on current state
+    switch (BUTTON_STATE) {
+      case "GET_MANAGER_DATA":
+        await handleGetManagerData();
         break;
-      }
-      MANAGER = manager;
-      const dataSpreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
-      
-      // Check if spreadsheet was fetched successfully
-      if (!dataSpreadsheet) {
-        console.error("Failed to fetch data spreadsheet");
-        alert("Failed to fetch data spreadsheet. Please check the URL and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      const managerSheet = getManagerSheet(dataSpreadsheet, manager)
-      
-      if (!managerSheet) {
-        alert("Manager sheet not found. Please check the manager selection and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      ACCOUNTS = getAccountsFromManagerSheet(managerSheet)
-      
-      if (!ACCOUNTS || ACCOUNTS.length === 0) {
-        alert("No accounts found for the selected manager. Please check the data and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      const accounts = ACCOUNTS;
-
-      const accountHtml = createAccountHtml(accounts)
-      document.getElementById("accounts_form").innerHTML = accountHtml;
-      BUTTON_STATE = "CREATE";
-      updateButtonState(BUTTON_STATE)
-      break;
-    
-    case "CREATE":
-      updateButtonState("")
-      const selectedAccounts = readAccountCheckBoxData();
-      
-      if(selectedAccounts.length === 0) {
-        alert("Please select at least one account.")
-        updateButtonState(BUTTON_STATE);
+      case "GET_DATA":
+        await handleGetData();
         break;
-      }
-      
-      const formDataCreate = readAccountBuildoutData();
-      const brandBuildoutSpreadsheet = await fetchSpreadsheet(formDataCreate.brandBuildoutSpreadsheetURL)
-      const accountDataSpreadsheetCreate = await fetchSpreadsheetSingleManager(formDataCreate.accountDataSpreadsheetURL, MANAGER)
-      
-      // Check if spreadsheets were fetched successfully
-      if (!brandBuildoutSpreadsheet) {
-        console.error("Failed to fetch brand buildout spreadsheet");
-        alert("Failed to fetch brand buildout spreadsheet. Please check the URL and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      if (!accountDataSpreadsheetCreate) {
-        console.error("Failed to fetch account data spreadsheet");
-        alert("Failed to fetch account data spreadsheet. Please check the URL and try again.");
-        updateButtonState(BUTTON_STATE);
-        return;
-      }
-      
-      try {
-        const newSheetUrl = await processRequest(brandBuildoutSpreadsheet, accountDataSpreadsheetCreate, selectedAccounts);
-        if (newSheetUrl) {
-          window.open(newSheetUrl, '_blank');
-        }
-      } catch (e) {
-        console.error("Error in processRequest:", e);
-        alert("An error occurred: " + (e.message || e));
-        // Optionally: signoutButton.onclick();
-      }
-
-      BUTTON_STATE = "GET_DATA";
-      updateButtonState(BUTTON_STATE);
-      document.getElementById("accounts_form").innerHTML = "";
-      ACCOUNTS = [];
-    break;
-
-    default:
-      console.log("")
-  }
-  
-  console.log('=== handleAccountBuildoutClick END ===');
-  } catch (error) {
-    console.error('=== handleAccountBuildoutClick ERROR ===');
-    console.error('Error details:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    
-    // Re-throw the error so the outer catch can handle it
-    throw error;
-  }
-}
-
-function readAccountCheckBoxData() {
-  let accounts = [];
-
-  for(let i = 0; i < ACCOUNTS.length; i++) {
-    const title = ACCOUNTS[i].accountTitle || ACCOUNTS[i]
-    const boxdiv = document.getElementById(title.split (" ").join("")+"-checkbox");
-    const checked = boxdiv.checked;
-
-    if(checked) {
-      accounts.push(ACCOUNTS[i]);
+      case "CREATE":
+        await handleCreate();
+        break;
+      default:
+        console.error('Unknown button state:', BUTTON_STATE);
     }
-  }
-
-  return accounts;
-}
-
-function readBrandBuildoutTemplateData() {
-  let formData = {};
-
-  formData.campaign = document.getElementById("campaign_name").value;
-  formData.adGroup = document.getElementById("ad_group_name").value;
-  formData.baseKeyword = document.getElementById("base_keyword_name").value;
-  formData.finalUrl = document.getElementById("final_url_name").value;
-
-  return formData;
-}
-
-function readAccountBuildoutData() {
-  let formData = {};
-
-  formData.brandBuildoutSpreadsheetURL = document.getElementById("master_brand_buildout_spreadsheet").value;
-  formData.accountDataSpreadsheetURL = document.getElementById("account_data_spreadsheet").value;
-  
-  if(formData.brandBuildoutSpreadsheetURL === "" || formData.accountDataSpreadsheetURL === "") {
-    alert("Please enter both a keyword spreadsheet and a manager-style data spreadsheet.")
-    location.reload()
-  }
-
-  return formData;
-}
-
-// Initialize Google API client
-function initGoogleApiClient() {
-  return new Promise((resolve, reject) => {
-    gapi.load('client', async () => {
-      try {
-        await gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-        });
-        // Google API client initialized successfully
-        resolve();
-      } catch (error) {
-        console.error('Error initializing Google API client:', error);
-        reject(error);
-      }
-    });
-  });
-}
-
-// Implement GIS OAuth 2.0 code flow
-async function gisLoaded() {
-  try {
-    // Initialize the Google API client first
-    await initGoogleApiClient();
     
-    // Then initialize the OAuth client
-    google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: async (tokenResponse) => {
-        if (tokenResponse && tokenResponse.access_token) {
-          updateAuthState(tokenResponse.access_token);
-        } else {
-          console.error('Failed to get access token:', tokenResponse);
-          alert('Failed to get access token. Please try again.');
-        }
-      }
-    }).requestAccessToken();
   } catch (error) {
-    console.error('Error in gisLoaded:', error);
-    alert('Failed to initialize Google API client. Please refresh the page and try again.');
+    console.error('Account buildout error:', error);
+    alert('An error occurred: ' + error.message);
   }
 }
 
-window.onload = function() {
-  // Always ensure the sign-in container exists and is visible
-  const signInBtn = document.getElementById('g_id_signin');
-  if (!signInBtn) {
-    console.error('Sign-in container not found');
+// Handle get manager data
+async function handleGetManagerData() {
+  console.log('Getting manager data...');
+  
+  updateButtonState("");
+  
+  const formData = readAccountBuildoutData();
+  console.log('Form data:', formData);
+  
+  const spreadsheet = await fetchSpreadsheetNoGridData(formData.accountDataSpreadsheetURL);
+  console.log('Spreadsheet response:', spreadsheet);
+  
+  if (!spreadsheet) {
+    alert('Failed to fetch spreadsheet. Please check the URL and try again.');
+    updateButtonState(BUTTON_STATE);
     return;
   }
   
-  // Check if user is already logged in
-  const existingToken = getCurrentAccessToken();
+  const managers = getManagersFromDataSpreadsheet(spreadsheet);
+  console.log('Managers found:', managers);
   
-  if (existingToken) {
-    // User is already logged in, update the auth state
-    updateAuthState(existingToken);
-  } else {
-    // User is not logged in, show the sign-in button
-    signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
-    const newButton = document.getElementById('custom-google-signin');
-    if (newButton) {
-      newButton.onclick = function() {
-        gisLoaded();
-      };
-    }
+  if (!managers || managers.length === 0) {
+    alert('No managers found in the spreadsheet.');
+    updateButtonState(BUTTON_STATE);
+    return;
   }
+  
+  const managerHtml = createManagerHtml(managers);
+  document.getElementById("accounts_form").innerHTML = managerHtml;
+  
+  BUTTON_STATE = "GET_DATA";
+  updateButtonState(BUTTON_STATE);
+}
 
-  // Dynamically load patch notes from patchnotes.txt
+// Handle get data
+async function handleGetData() {
+  console.log('Getting data...');
+  
+  updateButtonState("");
+  
+  const formData = readAccountBuildoutData();
+  const manager = readManagerSelectData();
+  
+  if (!manager) {
+    alert('Please select a manager.');
+    updateButtonState(BUTTON_STATE);
+    return;
+  }
+  
+  MANAGER = manager;
+  console.log('Selected manager:', MANAGER);
+  
+  const spreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER);
+  console.log('Manager spreadsheet:', spreadsheet);
+  
+  if (!spreadsheet) {
+    alert('Failed to fetch manager data.');
+    updateButtonState(BUTTON_STATE);
+    return;
+  }
+  
+  const managerSheet = getManagerSheet(spreadsheet, manager);
+  
+  if (!managerSheet) {
+    alert('Manager sheet not found.');
+    updateButtonState(BUTTON_STATE);
+    return;
+  }
+  
+  ACCOUNTS = getAccountsFromManagerSheet(managerSheet);
+  console.log('Accounts found:', ACCOUNTS);
+  
+  if (!ACCOUNTS || ACCOUNTS.length === 0) {
+    alert('No accounts found for this manager.');
+    updateButtonState(BUTTON_STATE);
+    return;
+  }
+  
+  const accountHtml = createAccountHtml(ACCOUNTS);
+  document.getElementById("accounts_form").innerHTML = accountHtml;
+  
+  BUTTON_STATE = "CREATE";
+  updateButtonState(BUTTON_STATE);
+}
+
+// Handle create
+async function handleCreate() {
+  console.log('Creating buildouts...');
+  
+  updateButtonState("");
+  
+  const selectedAccounts = readAccountCheckBoxData();
+  
+  if (selectedAccounts.length === 0) {
+    alert('Please select at least one account.');
+    updateButtonState(BUTTON_STATE);
+    return;
+  }
+  
+  const formData = readAccountBuildoutData();
+  
+  const brandSpreadsheet = await fetchSpreadsheet(formData.brandBuildoutSpreadsheetURL);
+  const accountSpreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER);
+  
+  if (!brandSpreadsheet || !accountSpreadsheet) {
+    alert('Failed to fetch spreadsheets.');
+    updateButtonState(BUTTON_STATE);
+    return;
+  }
+  
+  try {
+    await processRequest(brandSpreadsheet, accountSpreadsheet, selectedAccounts);
+    
+    // Reset to initial state
+    BUTTON_STATE = "GET_MANAGER_DATA";
+    updateButtonState(BUTTON_STATE);
+    document.getElementById("accounts_form").innerHTML = "";
+    ACCOUNTS = [];
+    
+  } catch (error) {
+    console.error('Process request error:', error);
+    alert('Error creating buildouts: ' + error.message);
+    updateButtonState(BUTTON_STATE);
+  }
+}
+
+// Update button state
+function updateButtonState(state) {
+  switch (state) {
+    case "GET_MANAGER_DATA":
+      buildoutButtonSpan.textContent = 'Get Manager Data';
+      break;
+    case "GET_DATA":
+      buildoutButtonSpan.textContent = 'Get Data';
+      break;
+    case "CREATE":
+      buildoutButtonSpan.textContent = 'Create Buildouts';
+      break;
+    default:
+      buildoutButtonSpan.textContent = 'Processing...';
+  }
+}
+
+// Read form data functions
+function readAccountBuildoutData() {
+  return {
+    brandBuildoutSpreadsheetURL: document.getElementById("master_brand_buildout_spreadsheet").value,
+    accountDataSpreadsheetURL: document.getElementById("account_data_spreadsheet").value
+  };
+}
+
+function readManagerSelectData() {
+  const select = document.getElementById("manager-select");
+  return select ? select.value : null;
+}
+
+function readAccountCheckBoxData() {
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+  return Array.from(checkboxes).map(cb => cb.value || cb.id.replace('-checkbox', ''));
+}
+
+// Load patch notes
+function loadPatchNotes() {
   fetch('patchnotes.txt')
     .then(response => response.text())
     .then(text => {
-      // Replace newline characters with HTML break tags for proper formatting
       const formattedText = text.replace(/\n/g, '<br>');
       document.getElementById('patch_notes').innerHTML = formattedText;
     })
@@ -482,73 +432,42 @@ window.onload = function() {
       document.getElementById('patch_notes').textContent = 'Unable to load patch notes.';
       console.error('Failed to load patchnotes.txt:', err);
     });
-};
+}
 
-// Update the account buildout button click handler
-accountBuildoutButton.onclick = async function() {
-  console.log('=== BUTTON CLICKED ===');
-  console.log('Button click handler started');
+// Handle create brand template buildout (existing function)
+async function handleCreateBrandTemplateBuildoutClick(e) {
+  e.preventDefault();
+  
+  const formData = readBrandBuildoutTemplateData();
+  
+  if (!formData.campaign || !formData.adGroup || !formData.baseKeyword || !formData.finalUrl) {
+    alert('Please fill in all fields.');
+    return;
+  }
+  
   try {
-    // Check authentication first
-    if (!isAuthenticated()) {
-      alert('You must sign in with Google before proceeding.');
-      return;
+    const spreadsheet = createBrandBuildoutTemplateSpreadsheet(
+      formData.campaign,
+      formData.adGroup,
+      formData.baseKeyword,
+      formData.finalUrl
+    );
+    
+    const url = await createNewDocument(spreadsheet);
+    if (url) {
+      window.open(url, '_blank');
     }
-    
-    // Check if Google API client is initialized
-    if (!gapi.client.sheets) {
-      await initGoogleApiClient();
-    }
-    
-    // Ensure token is available in memory and synchronized
-    const token = getCurrentAccessToken();
-    if (!token) {
-      alert('Authentication token not found. Please sign in again.');
-      signOut();
-      return;
-    }
-    
-    // Update window.accessToken to ensure it's available for API calls
-    window.accessToken = token;
-    
-    // Force token synchronization for all API calls
-    console.log('Token synchronized for API calls:', token ? 'Token available' : 'No token');
-    
-    // Proceed with account buildout
-    await handleAccountBuildoutClick();
   } catch (error) {
-    console.error("Error in account buildout button click:", error);
-    
-    // Check if it's an authentication error
-    if (error.message && (error.message.includes('access token') || error.message.includes('unauthorized'))) {
-      alert('Authentication error. Please sign out and sign in again.');
-      signOut();
-    } else if (error.message && error.message.includes('Failed to fetch')) {
-      alert('Network error. Please check your internet connection and try again.');
-    } else {
-      alert('An error occurred: ' + (error.message || 'Unknown error'));
-    }
-    
-    // Don't reset UI state on error - let user try again with same data
-    // resetUIState(); // Reset UI so user can try again
+    console.error('Error creating brand template:', error);
+    alert('Error creating spreadsheet: ' + error.message);
   }
-};
+}
 
-// Add a global function to reset UI state after spreadsheet creation
-function resetUIState() {
-  // Don't clear input fields - keep them for repeated use
-  // document.getElementById("master_brand_buildout_spreadsheet").value = "";
-  // document.getElementById("account_data_spreadsheet").value = "";
-  
-  // Only clear the accounts form and reset button state
-  document.getElementById("accounts_form").innerHTML = "";
-  BUTTON_STATE = "GET_MANAGER_DATA";
-  updateButtonState(BUTTON_STATE);
-  ACCOUNTS = [];
-  
-  // Ensure authentication is still valid
-  if (!isAuthenticated()) {
-    // Authentication lost during reset, signing out
-    signOut();
-  }
-};
+function readBrandBuildoutTemplateData() {
+  return {
+    campaign: document.getElementById("campaign_name").value,
+    adGroup: document.getElementById("ad_group_name").value,
+    baseKeyword: document.getElementById("base_keyword_name").value,
+    finalUrl: document.getElementById("final_url_name").value
+  };
+}
