@@ -196,18 +196,26 @@ function readManagerSelectData() {
  * Create Account buildouts on Click 
  */
 async function handleAccountBuildoutClick(e) {
-  // Ensure authentication is still valid before proceeding
-  if (!isAuthenticated()) {
-    // Authentication lost during account buildout, signing out
-    signOut();
-    return;
-  }
-  
-  // Ensure token is available for API calls
-  const token = getCurrentAccessToken();
-  if (token) {
-    window.accessToken = token;
-  }
+  try {
+    console.log('=== handleAccountBuildoutClick START ===');
+    console.log('Current BUTTON_STATE:', BUTTON_STATE);
+    
+    // Ensure authentication is still valid before proceeding
+    if (!isAuthenticated()) {
+      console.log('Authentication check failed');
+      // Authentication lost during account buildout, signing out
+      signOut();
+      return;
+    }
+    
+    // Ensure token is available for API calls
+    const token = getCurrentAccessToken();
+    if (token) {
+      window.accessToken = token;
+      console.log('Token synchronized in handleAccountBuildoutClick');
+    } else {
+      console.error('No token available in handleAccountBuildoutClick');
+    }
   
   switch(BUTTON_STATE) {
     case "GET_MANAGER_DATA":
@@ -339,6 +347,17 @@ async function handleAccountBuildoutClick(e) {
     default:
       console.log("")
   }
+  
+  console.log('=== handleAccountBuildoutClick END ===');
+  } catch (error) {
+    console.error('=== handleAccountBuildoutClick ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Re-throw the error so the outer catch can handle it
+    throw error;
+  }
 }
 
 function readAccountCheckBoxData() {
@@ -467,6 +486,8 @@ window.onload = function() {
 
 // Update the account buildout button click handler
 accountBuildoutButton.onclick = async function() {
+  console.log('=== BUTTON CLICKED ===');
+  console.log('Button click handler started');
   try {
     // Check authentication first
     if (!isAuthenticated()) {
