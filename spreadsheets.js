@@ -1282,37 +1282,61 @@ function consoleLogSpreadSheet(spreadSheet) {
 }
 
 function getManagersFromDataSpreadsheet(dataSpreadsheet) {
-  if (!dataSpreadsheet || !dataSpreadsheet.sheets) {
+  if (!dataSpreadsheet) {
+    console.error('getManagersFromDataSpreadsheet: dataSpreadsheet is null or undefined');
     alert('Failed to load spreadsheet data. Please check your access and try again.');
     return [];
   }
+  
+  if (!dataSpreadsheet.sheets || !Array.isArray(dataSpreadsheet.sheets)) {
+    console.error('getManagersFromDataSpreadsheet: Invalid sheets structure:', dataSpreadsheet);
+    alert('Invalid spreadsheet structure. Please check the spreadsheet format.');
+    return [];
+  }
+  
   let managers = [];
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
     const sheet = dataSpreadsheet.sheets[i];
-    if(sheet.properties.title !== "URL Data") managers.push(sheet.properties.title);
+    if(sheet && sheet.properties && sheet.properties.title && sheet.properties.title !== "URL Data") {
+      managers.push(sheet.properties.title);
+    }
   }
+  
+  console.log('Found managers:', managers);
   return managers;
 }
 
 function getManagerSheet(dataSpreadsheet, manager) {
-  if (!dataSpreadsheet || !Array.isArray(dataSpreadsheet.sheets)) {
-    console.error('getManagerSheet: Invalid dataSpreadsheet:', dataSpreadsheet);
+  if (!dataSpreadsheet) {
+    console.error('getManagerSheet: dataSpreadsheet is null or undefined');
     alert('Manager sheet data is not available. Please try again.');
     return null;
   }
-  const availableSheetNames = dataSpreadsheet.sheets.map(s => s.properties.title);
+  
+  if (!Array.isArray(dataSpreadsheet.sheets)) {
+    console.error('getManagerSheet: Invalid sheets structure:', dataSpreadsheet);
+    alert('Invalid spreadsheet structure. Please check the spreadsheet format.');
+    return null;
+  }
+  
+  const availableSheetNames = dataSpreadsheet.sheets.map(s => s.properties?.title || 'Unknown').filter(Boolean);
   // Looking for manager sheet
   let managerSheet = null;
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
-    if(dataSpreadsheet.sheets[i].properties.title === manager) {
-      managerSheet = dataSpreadsheet.sheets[i];
+    const sheet = dataSpreadsheet.sheets[i];
+    if(sheet && sheet.properties && sheet.properties.title === manager) {
+      managerSheet = sheet;
       break;
     }
   }
+  
   if (!managerSheet) {
     console.warn('getManagerSheet: Manager sheet not found for manager:', manager);
     alert('Manager sheet not found: ' + manager + '. Available sheets: ' + availableSheetNames.join(', '));
+    return null;
   }
+  
+  console.log('Found manager sheet:', managerSheet.properties.title);
   return managerSheet;
 }
 

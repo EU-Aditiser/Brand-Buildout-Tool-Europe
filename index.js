@@ -215,7 +215,22 @@ async function handleAccountBuildoutClick(e) {
 
       const managerFormData = readAccountBuildoutData();
       const managerDataSpreadsheet = await fetchSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
+      
+      // Check if spreadsheet was fetched successfully
+      if (!managerDataSpreadsheet) {
+        console.error("Failed to fetch manager data spreadsheet");
+        alert("Failed to fetch manager data spreadsheet. Please check the URL and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
+      
       const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
+      
+      if (!managers || managers.length === 0) {
+        alert("No managers found in the spreadsheet. Please check the data and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
       
       const managerHtml = createManagerHtml(managers)
       document.getElementById("accounts_form").innerHTML = managerHtml;
@@ -236,8 +251,30 @@ async function handleAccountBuildoutClick(e) {
       }
       MANAGER = manager;
       const dataSpreadsheet = await fetchSpreadsheetSingleManager(formData.accountDataSpreadsheetURL, MANAGER)
+      
+      // Check if spreadsheet was fetched successfully
+      if (!dataSpreadsheet) {
+        console.error("Failed to fetch data spreadsheet");
+        alert("Failed to fetch data spreadsheet. Please check the URL and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
+      
       const managerSheet = getManagerSheet(dataSpreadsheet, manager)
+      
+      if (!managerSheet) {
+        alert("Manager sheet not found. Please check the manager selection and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
+      
       ACCOUNTS = getAccountsFromManagerSheet(managerSheet)
+      
+      if (!ACCOUNTS || ACCOUNTS.length === 0) {
+        alert("No accounts found for the selected manager. Please check the data and try again.");
+        updateButtonState(BUTTON_STATE);
+        return;
+      }
       
       const accounts = ACCOUNTS;
 
