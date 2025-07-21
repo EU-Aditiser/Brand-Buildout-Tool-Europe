@@ -33,16 +33,16 @@ input, label {
     width: 100%;
 }
 
-.btn-primary {
-    background-color: #FADA5E;
-    border-color: #FADA5E;
-    color: #333;
+button.btn-primary, .btn.btn-primary {
+    background-color: #FADA5E !important;
+    border-color: #FADA5E !important;
+    color: #333 !important;
 }
 
-.btn-primary:hover, .btn-primary:focus {
-    background-color: #104a9e;
-    border-color: #104a9e;
-    color: #fff;
+button.btn-primary:hover, .btn.btn-primary:hover, button.btn-primary:focus, .btn.btn-primary:focus {
+    background-color: #104a9e !important;
+    border-color: #104a9e !important;
+    color: #fff !important;
 }
 
 .spinner-grow {
