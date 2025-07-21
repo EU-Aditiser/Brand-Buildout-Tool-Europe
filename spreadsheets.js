@@ -139,12 +139,6 @@ function getAdCopyRowData(sheet, account, language, type) {
 }
 
 async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accounts) {
-  console.log('processRequest: Starting with accounts:', accounts);
-  console.log('processRequest: Input spreadsheets:', {
-    buildoutSpreadsheet: buildoutSpreadsheet?.sheets?.length,
-    accountDataSpreadsheet: accountDataSpreadsheet?.sheets?.length
-  });
-
   // Validate input spreadsheets
   const buildoutValidation = validateSpreadsheetData(buildoutSpreadsheet, 'Brand Buildout Spreadsheet');
   const accountDataValidation = validateSpreadsheetData(accountDataSpreadsheet, 'Account Data Spreadsheet');
@@ -156,25 +150,21 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
   if (buildoutHasIssues || accountDataHasIssues) {
     const continueProcessing = confirm('Data validation found issues. Do you want to continue processing anyway? (This may cause errors)');
     if (!continueProcessing) {
-      console.log('processRequest: User cancelled due to validation issues');
       return;
     }
   }
 
   if (!buildoutSpreadsheet || !buildoutSpreadsheet.sheets) {
-    console.error('processRequest: Invalid buildoutSpreadsheet:', buildoutSpreadsheet);
     alert('Failed to load the brand buildout spreadsheet. Please check your access and try again.');
     return;
   }
   if (!accountDataSpreadsheet || !accountDataSpreadsheet.sheets) {
-    console.error('processRequest: Invalid accountDataSpreadsheet:', accountDataSpreadsheet);
     alert('Failed to load the account data spreadsheet. Please check your access and try again.');
     return;
   }
 
   const urlDataSheet = getUrlDataSheet(accountDataSpreadsheet);
   if (!urlDataSheet) {
-    console.error('processRequest: URL Data sheet not found');
     alert('Failed to find URL Data sheet. Please check the spreadsheet structure.');
     return;
   }
@@ -182,72 +172,52 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
   let spreadsheets = [];
   const managerSheet = getManagerSheet(accountDataSpreadsheet, MANAGER);
   if (!managerSheet) {
-    console.error('processRequest: managerSheet is null or undefined');
     alert('Failed to get manager sheet data. Please try again.');
     return;
   }
 
-  console.log('processRequest: Processing accounts:', accounts);
   for(let i = 0; i < accounts.length; i++) {
-    console.log('processRequest: Creating buildout spreadsheet for account:', accounts[i]);
     try {
       const accountBuildoutSpreadsheet = await createAccountBuildoutSpreadsheet(buildoutSpreadsheet, managerSheet, urlDataSheet, accounts[i]);
       if (!accountBuildoutSpreadsheet) {
-        console.error('processRequest: createAccountBuildoutSpreadsheet returned null for account:', accounts[i]);
         continue;
       }
-      console.log('processRequest: Successfully created buildout spreadsheet for account:', accounts[i], 'with sheets:', accountBuildoutSpreadsheet.sheets?.length);
       spreadsheets.push(accountBuildoutSpreadsheet);
     } catch (error) {
-      console.error('processRequest: Error creating buildout spreadsheet for account:', accounts[i], 'Error:', error);
+      console.error('Error creating buildout spreadsheet for account:', accounts[i], 'Error:', error);
       throw new Error(`Failed to create buildout spreadsheet for account ${accounts[i]}: ${error.message}`);
     }
   }
 
-  console.log('processRequest: Created', spreadsheets.length, 'spreadsheets');
   if (spreadsheets.length === 0) {
-    console.error('processRequest: No spreadsheets were created successfully');
     alert('No spreadsheets could be created. Please check the console for details.');
     return;
   }
 
   let createdUrls = [];
   for(let i = 0; i < spreadsheets.length; i++) {
-    console.log('processRequest: Creating new document for spreadsheet', i, ':', {
-      hasSheets: !!spreadsheets[i]?.sheets,
-      sheetCount: spreadsheets[i]?.sheets?.length,
-      firstSheetTitle: spreadsheets[i]?.sheets?.[0]?.properties?.title
-    });
     if (!spreadsheets[i]) {
-      console.error('processRequest: spreadsheet at index', i, 'is undefined');
       continue;
     }
     try {
       const spreadsheetUrl = await createNewDocument(spreadsheets[i]);
       if (spreadsheetUrl) {
-        console.log('processRequest: Successfully created spreadsheet URL:', spreadsheetUrl);
         createdUrls.push(spreadsheetUrl);
-      } else {
-        console.error('processRequest: createNewDocument returned null URL for spreadsheet index', i);
       }
     } catch (error) {
-      console.error('processRequest: Error creating spreadsheet:', error);
+      console.error('Error creating spreadsheet:', error);
       alert('Failed to create spreadsheet: ' + error.message);
     }
   }
 
   // Open all created spreadsheets in new tabs
   if (createdUrls.length > 0) {
-    console.log('processRequest: Opening', createdUrls.length, 'spreadsheets in new tabs');
     createdUrls.forEach(url => {
       if (url && url.startsWith('https://')) {
         window.open(url, '_blank', 'noopener,noreferrer');
-      } else {
-        console.error('processRequest: Invalid spreadsheet URL:', url);
       }
     });
   } else {
-    console.error('processRequest: No spreadsheets were created successfully');
     alert('No spreadsheets could be created. Please check the console for details.');
   }
 
@@ -374,12 +344,7 @@ function getThirdLevelDomainFromSheet(sheet, account) {
 }
 
 async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet, urlDataSheet, account) {
-  console.log('createAccountBuildoutSpreadsheet: Starting for account:', account);
-  console.log('createAccountBuildoutSpreadsheet: Input sheets:', {
-    keywordSpreadsheet: keywordSpreadsheet?.sheets?.length,
-    adCopySheet: adCopySheet?.properties?.title,
-    urlDataSheet: urlDataSheet?.properties?.title
-  });
+  // Creating buildout spreadsheet for account: account
 
   if (!keywordSpreadsheet || !keywordSpreadsheet.sheets) {
     console.error('createAccountBuildoutSpreadsheet: Invalid keywordSpreadsheet:', keywordSpreadsheet);
@@ -432,8 +397,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   const languages = getAccountLanguagesFromSheet(adCopySheet, account);
   const campaigns = getAccountCampaignsFromSheet(adCopySheet, account);
 
-  console.log('createAccountBuildoutSpreadsheet: Found languages:', languages);
-  console.log('createAccountBuildoutSpreadsheet: Found campaigns:', campaigns);
+  // Found languages and campaigns for account
 
   if (!languages.length || !campaigns.length) {
     console.error('createAccountBuildoutSpreadsheet: No languages or campaigns found for account:', account);
@@ -609,13 +573,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
       }
     }
   }
-  console.log('createAccountBuildoutSpreadsheet: Final spreadsheet structure:', {
-    title: masterSpreadsheet.properties.title,
-    sheets: masterSpreadsheet.sheets.map(sheet => ({
-      title: sheet.properties.title,
-      rowCount: sheet.data[0].rowData.length
-    }))
-  });
+  // Final spreadsheet structure created
   return masterSpreadsheet;
 }
 
@@ -712,13 +670,17 @@ function getDocumentIdFromUrl (url) {
 async function fetchSpreadsheetNoGridData(url) {
   const spreadsheetId = getDocumentIdFromUrl(url);
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`;
-  if (!window.accessToken) {
+  
+  // Get current access token
+  const token = window.accessToken || localStorage.getItem('accessToken');
+  if (!token) {
     alert("Google access token not available. Please sign in again.");
     return null;
   }
+  
   const res = await fetch(apiUrl, {
     headers: {
-      'Authorization': `Bearer ${window.accessToken}`
+      'Authorization': `Bearer ${token}`
     }
   });
   if (!res.ok) {
@@ -732,28 +694,22 @@ async function fetchSpreadsheetNoGridData(url) {
 
 // Helper to fetch a spreadsheet with grid data using access token
 async function fetchSpreadsheet(url) {
-  console.log('fetchSpreadsheet: Starting with URL:', url);
-  
   if (!url || url.trim() === '') {
-    console.error('fetchSpreadsheet: Empty URL provided');
     alert('Please provide a valid spreadsheet URL.');
     return null;
   }
   
   const spreadsheetId = getDocumentIdFromUrl(url);
-  console.log('fetchSpreadsheet: Extracted spreadsheetId:', spreadsheetId);
-  
   if (!spreadsheetId) {
-    console.error('fetchSpreadsheet: Could not extract spreadsheet ID from URL:', url);
     alert('Invalid spreadsheet URL. Please check the URL and try again.');
     return null;
   }
   
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=true`;
-  console.log('fetchSpreadsheet: API URL:', apiUrl);
   
-  if (!window.accessToken) {
-    console.error('fetchSpreadsheet: No access token available');
+  // Get current access token
+  const token = window.accessToken || localStorage.getItem('accessToken');
+  if (!token) {
     alert("Google access token not available. Please sign in again.");
     return null;
   }
@@ -761,32 +717,30 @@ async function fetchSpreadsheet(url) {
   try {
     const res = await fetch(apiUrl, {
       headers: {
-        'Authorization': `Bearer ${window.accessToken}`
+        'Authorization': `Bearer ${token}`
       }
     });
     
     if (!res.ok) {
       const err = await res.text();
-      console.error('fetchSpreadsheet: Sheets API error:', err);
+      console.error('Sheets API error:', err);
       alert('Sheets API error: ' + err);
       return null;
     }
     
     const result = await res.json();
-    console.log('fetchSpreadsheet: Successfully fetched spreadsheet:', result?.properties?.title);
     
     // Validate the fetched data
     if (result && result.properties && result.properties.title) {
       const validation = validateSpreadsheetData(result, result.properties.title);
       if (validation.errors.length > 0 || validation.warnings.length > 0) {
-        console.warn('fetchSpreadsheet: Data validation issues detected in fetched spreadsheet');
         displayValidationResults(validation, result.properties.title);
       }
     }
     
     return result;
   } catch (error) {
-    console.error('fetchSpreadsheet: Network or parsing error:', error);
+    console.error('Failed to fetch spreadsheet:', error);
     alert('Failed to fetch spreadsheet: ' + error.message);
     return null;
   }
@@ -794,35 +748,28 @@ async function fetchSpreadsheet(url) {
 
 // Helper to fetch a single manager's sheet and URL Data using access token
 async function fetchSpreadsheetSingleManager(url, manager) {
-  console.log('fetchSpreadsheetSingleManager: Starting with URL:', url, 'manager:', manager);
-  
   if (!url || url.trim() === '') {
-    console.error('fetchSpreadsheetSingleManager: Empty URL provided');
     alert('Please provide a valid spreadsheet URL.');
     return null;
   }
   
   if (!manager || manager.trim() === '') {
-    console.error('fetchSpreadsheetSingleManager: Empty manager provided');
     alert('Please select a manager.');
     return null;
   }
   
   const spreadsheetId = getDocumentIdFromUrl(url);
-  console.log('fetchSpreadsheetSingleManager: Extracted spreadsheetId:', spreadsheetId);
-  
   if (!spreadsheetId) {
-    console.error('fetchSpreadsheetSingleManager: Could not extract spreadsheet ID from URL:', url);
     alert('Invalid spreadsheet URL. Please check the URL and try again.');
     return null;
   }
   
   // Update range to include all columns up to AH (column 34) to cover all headlines and descriptions
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AH100')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
-  console.log('fetchSpreadsheetSingleManager: API URL:', apiUrl);
   
-  if (!window.accessToken) {
-    console.error('fetchSpreadsheetSingleManager: No access token available');
+  // Get current access token
+  const token = window.accessToken || localStorage.getItem('accessToken');
+  if (!token) {
     alert("Google access token not available. Please sign in again.");
     return null;
   }
@@ -830,29 +777,28 @@ async function fetchSpreadsheetSingleManager(url, manager) {
   try {
     const res = await fetch(apiUrl, {
       headers: {
-        'Authorization': `Bearer ${window.accessToken}`
+        'Authorization': `Bearer ${token}`
       }
     });
     
     if (!res.ok) {
       const err = await res.text();
-      console.error('fetchSpreadsheetSingleManager: Sheets API error:', err);
+      console.error('Sheets API error:', err);
       alert('Sheets API error: ' + err);
       return null;
     }
     
     const result = await res.json();
-    console.log('fetchSpreadsheetSingleManager: Successfully fetched spreadsheet:', result?.properties?.title);
     return result;
   } catch (error) {
-    console.error('fetchSpreadsheetSingleManager: Network or parsing error:', error);
+    console.error('Failed to fetch spreadsheet:', error);
     alert('Failed to fetch spreadsheet: ' + error.message);
     return null;
   }
 }
 
 function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
-  console.log('transformFetchedSpreadsheetToCreationFormat: Input:', fetchedSpreadsheet);
+  // Transforming fetched spreadsheet to creation format
   
   if (!fetchedSpreadsheet) {
     console.error("transformFetchedSpreadsheetToCreationFormat: Input spreadsheet is null or undefined");
@@ -872,7 +818,7 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
       fetchedSpreadsheet.sheets[0].data &&
       fetchedSpreadsheet.sheets[0].properties.title &&
       fetchedSpreadsheet.sheets[0].properties.sheetId !== undefined) {
-    console.log('transformFetchedSpreadsheetToCreationFormat: Spreadsheet already in correct format');
+    // Spreadsheet already in correct format
     return fetchedSpreadsheet;
   }
 
@@ -956,7 +902,7 @@ function transformFetchedSpreadsheetToCreationFormat(fetchedSpreadsheet) {
     }
   }
 
-  console.log('transformFetchedSpreadsheetToCreationFormat: Output:', creationSpreadsheet);
+  // Transformation completed
   return creationSpreadsheet;
 }
 
@@ -1027,7 +973,7 @@ function batchUpdate(spreadsheetId, requests) {
   }, {
     requests
   }).then((response) => {
-    console.log(response);
+    // Batch update completed
   });
 }
 function copyRowData(row) {
@@ -1100,7 +1046,7 @@ function markCellRed(cell) {
 }
 
 async function createNewDocument(spreadsheet) {
-  console.log('createNewDocument received:', JSON.stringify(spreadsheet, null, 2));
+  // Creating new document
 
   // Validate input structure
   if (!spreadsheet || !spreadsheet.properties || !spreadsheet.properties.title) {
@@ -1164,7 +1110,7 @@ async function createNewDocument(spreadsheet) {
     })
   };
 
-  console.log('createNewDocument: Attempting to create spreadsheet with structure:', JSON.stringify(apiSpreadsheet, null, 2));
+  // Attempting to create spreadsheet
 
   try {
     const response = await gapi.client.sheets.spreadsheets.create({
@@ -1172,7 +1118,7 @@ async function createNewDocument(spreadsheet) {
     });
 
     if (response.status === 200 && response.result) {
-      console.log('createNewDocument: Successfully created spreadsheet:', response.result.spreadsheetUrl);
+      // Successfully created spreadsheet
       return response.result.spreadsheetUrl;
     } else {
       console.error('createNewDocument: Unexpected response:', response);
@@ -1196,7 +1142,7 @@ async function createNewDocument(spreadsheet) {
 }
 
 function createSpreadSheet(title, headers) {
-  console.log('createSpreadSheet: Creating spreadsheet with title:', title);
+  // Creating spreadsheet with title
   var spreadSheet = {
     properties: {
       title: title
@@ -1219,7 +1165,7 @@ function createSpreadSheet(title, headers) {
       }]
     }]
   };
-  console.log('createSpreadSheet: Created spreadsheet structure:', spreadSheet);
+  // Created spreadsheet structure
   return spreadSheet;
 }
 
@@ -1295,7 +1241,7 @@ function consoleLogSpreadSheet(spreadSheet) {
         rowText += cell.userEnteredValue.stringValue + " ";
       }
     }
-    console.log(rowText)
+    // Row data logged
   }
 }
 
@@ -1319,7 +1265,7 @@ function getManagerSheet(dataSpreadsheet, manager) {
     return null;
   }
   const availableSheetNames = dataSpreadsheet.sheets.map(s => s.properties.title);
-  console.log('getManagerSheet: available sheets:', availableSheetNames, 'looking for manager:', manager);
+  // Looking for manager sheet
   let managerSheet = null;
   for(let i = 0; i < dataSpreadsheet.sheets.length; i++) {
     if(dataSpreadsheet.sheets[i].properties.title === manager) {
@@ -1363,7 +1309,7 @@ function createAccountHtml(accounts) {
 
 // Add validation function at the top of the file
 function validateSpreadsheetData(spreadsheet, spreadsheetName) {
-  console.log(`Validating spreadsheet: ${spreadsheetName}`);
+  // Validating spreadsheet
   
   if (!spreadsheet || !spreadsheet.sheets) {
     return {
@@ -1483,7 +1429,7 @@ function displayValidationResults(validation, spreadsheetName) {
     
     alert(message);
   } else {
-    console.log(`✅ ${spreadsheetName}: All data validated successfully`);
+    // All data validated successfully
   }
   
   return hasIssues;

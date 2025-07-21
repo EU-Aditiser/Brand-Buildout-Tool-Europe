@@ -11,6 +11,94 @@ updateButtonState(BUTTON_STATE);
 let ACCOUNTS = [];
 let accessToken = null;
 
+// Unified authentication management
+function updateAuthState(token) {
+  accessToken = token;
+  window.accessToken = token;
+  
+  const signInBtn = document.getElementById('g_id_signin');
+  if (!signInBtn) {
+    console.error('Sign-in button container not found');
+    return;
+  }
+  
+  if (token) {
+    localStorage.setItem('accessToken', token);
+    // Update button to show "You're signed in" with sign-out option
+    signInBtn.innerHTML = `
+      <div class="d-flex gap-2 align-items-center">
+        <button class="btn btn-success" disabled>✓ You're signed in</button>
+        <button id="sign-out-btn" class="btn btn-outline-secondary btn-sm">Sign Out</button>
+      </div>
+    `;
+    
+    // Add sign-out functionality
+    const signOutBtn = document.getElementById('sign-out-btn');
+    if (signOutBtn) {
+      signOutBtn.onclick = function() {
+        signOut();
+      };
+    }
+    
+    // Authentication successful
+  } else {
+    localStorage.removeItem('accessToken');
+    // Update button to show "Sign in with Google"
+    signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
+    const newButton = document.getElementById('custom-google-signin');
+    if (newButton) {
+      newButton.onclick = function() {
+        gisLoaded();
+      };
+    }
+    
+    // Authentication cleared
+  }
+}
+
+// Add sign-out function
+function signOut() {
+  // Clear all authentication data
+  accessToken = null;
+  window.accessToken = null;
+  localStorage.removeItem('accessToken');
+  
+  // Update UI to show sign-in button
+  updateAuthState(null);
+  
+  // Reset any error states
+  const errorDiv = document.getElementById('signin-error');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+  }
+  
+  // Successfully signed out
+}
+
+// Check if user is authenticated
+function isAuthenticated() {
+  const token = getCurrentAccessToken();
+  return !!token;
+}
+
+// Get the current access token
+function getCurrentAccessToken() {
+  // First check memory, then localStorage
+  if (accessToken) {
+    return accessToken;
+  }
+  
+  const storedToken = localStorage.getItem('accessToken');
+  if (storedToken) {
+    // Restore token to memory
+    accessToken = storedToken;
+    window.accessToken = storedToken;
+    return storedToken;
+  }
+  
+  return null;
+}
+
 // Stub for isTokenExpired to prevent ReferenceError
 function isTokenExpired() {
   // TODO: Implement real token expiration check if needed
@@ -21,14 +109,49 @@ function isTokenExpired() {
  * 
  * Create Brand Template on Click 
  */
-function handleCreateBrandTemplateBuildoutClick(e) {
-  const formData = readBrandBuildoutTemplateData();
+async function handleCreateBrandTemplateBuildoutClick(e) {
+  try {
+    // Check authentication first
+    if (!isAuthenticated()) {
+      alert('You must sign in with Google before proceeding.');
+      return;
+    }
+    
+    // Check if Google API client is initialized
+    if (!gapi.client.sheets) {
+      await initGoogleApiClient();
+    }
+    
+    // Ensure token is available
+    const token = getCurrentAccessToken();
+    if (!token) {
+      alert('Authentication token not found. Please sign in again.');
+      signOut();
+      return;
+    }
+    
+    // Update window.accessToken
+    window.accessToken = token;
+    
+    const formData = readBrandBuildoutTemplateData();
 
-  const spreadsheet = createBrandBuildoutTemplateSpreadsheet(formData.campaign, formData.adGroup, formData.baseKeyword, formData.finalUrl);
+    const spreadsheet = createBrandBuildoutTemplateSpreadsheet(formData.campaign, formData.adGroup, formData.baseKeyword, formData.finalUrl);
 
-  //create spreadsheet
-  const url = createNewDocument(spreadsheet);
-  window.open(url, '_blank');
+    //create spreadsheet
+    const url = await createNewDocument(spreadsheet);
+    if (url) {
+      window.open(url, '_blank');
+    }
+  } catch (error) {
+    console.error("Error in brand template creation:", error);
+    
+    if (error.message && (error.message.includes('access token') || error.message.includes('unauthorized'))) {
+      alert('Authentication error. Please sign out and sign in again.');
+      signOut();
+    } else {
+      alert('An error occurred. Please try again.');
+    }
+  }
 }
 
 function updateButtonState(state) {
@@ -73,6 +196,19 @@ function readManagerSelectData() {
  * Create Account buildouts on Click 
  */
 async function handleAccountBuildoutClick(e) {
+  // Ensure authentication is still valid before proceeding
+  if (!isAuthenticated()) {
+    // Authentication lost during account buildout, signing out
+    signOut();
+    return;
+  }
+  
+  // Ensure token is available for API calls
+  const token = getCurrentAccessToken();
+  if (token) {
+    window.accessToken = token;
+  }
+  
   switch(BUTTON_STATE) {
     case "GET_MANAGER_DATA":
       updateButtonState("")
@@ -212,7 +348,7 @@ function initGoogleApiClient() {
           apiKey: API_KEY,
           discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
         });
-        console.log('Google API client initialized successfully');
+        // Google API client initialized successfully
         resolve();
       } catch (error) {
         console.error('Error initializing Google API client:', error);
@@ -234,10 +370,7 @@ async function gisLoaded() {
       scope: SCOPES,
       callback: async (tokenResponse) => {
         if (tokenResponse && tokenResponse.access_token) {
-          accessToken = tokenResponse.access_token;
-          window.accessToken = accessToken;
-          document.getElementById('g_id_signin').style.display = 'none';
-          console.log('Successfully authenticated with Google');
+          updateAuthState(tokenResponse.access_token);
         } else {
           console.error('Failed to get access token:', tokenResponse);
           alert('Failed to get access token. Please try again.');
@@ -251,12 +384,29 @@ async function gisLoaded() {
 }
 
 window.onload = function() {
-  // Render a custom sign-in button
+  // Always ensure the sign-in container exists and is visible
   const signInBtn = document.getElementById('g_id_signin');
-  signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
-  document.getElementById('custom-google-signin').onclick = function() {
-    gisLoaded();
-  };
+  if (!signInBtn) {
+    console.error('Sign-in container not found');
+    return;
+  }
+  
+  // Check if user is already logged in
+  const existingToken = getCurrentAccessToken();
+  
+  if (existingToken) {
+    // User is already logged in, update the auth state
+    updateAuthState(existingToken);
+  } else {
+    // User is not logged in, show the sign-in button
+    signInBtn.innerHTML = '<button id="custom-google-signin" class="btn btn-outline-primary">Sign in with Google</button>';
+    const newButton = document.getElementById('custom-google-signin');
+    if (newButton) {
+      newButton.onclick = function() {
+        gisLoaded();
+      };
+    }
+  }
 
   // Dynamically load patch notes from patchnotes.txt
   fetch('patchnotes.txt')
@@ -275,34 +425,65 @@ window.onload = function() {
 // Update the account buildout button click handler
 accountBuildoutButton.onclick = async function() {
   try {
-    // Check if Google API client is initialized
-    if (!gapi.client.sheets) {
-      console.log('Initializing Google API client...');
-      await initGoogleApiClient();
-    }
-    
-    // Check authentication state
-    if (!accessToken) {
+    // Check authentication first
+    if (!isAuthenticated()) {
       alert('You must sign in with Google before proceeding.');
       return;
     }
+    
+    // Check if Google API client is initialized
+    if (!gapi.client.sheets) {
+      await initGoogleApiClient();
+    }
+    
+    // Ensure token is available in memory and synchronized
+    const token = getCurrentAccessToken();
+    if (!token) {
+      alert('Authentication token not found. Please sign in again.');
+      signOut();
+      return;
+    }
+    
+    // Update window.accessToken to ensure it's available for API calls
+    window.accessToken = token;
+    
+    // Starting account buildout with authenticated token
     
     // Proceed with account buildout
     await handleAccountBuildoutClick();
   } catch (error) {
     console.error("Error in account buildout button click:", error);
-    alert('An error occurred. Please try again or refresh the page.');
-    resetUIState(); // Reset UI so user can try again
+    
+    // Check if it's an authentication error
+    if (error.message && (error.message.includes('access token') || error.message.includes('unauthorized'))) {
+      alert('Authentication error. Please sign out and sign in again.');
+      signOut();
+    } else if (error.message && error.message.includes('Failed to fetch')) {
+      alert('Network error. Please check your internet connection and try again.');
+    } else {
+      alert('An error occurred: ' + (error.message || 'Unknown error'));
+    }
+    
+    // Don't reset UI state on error - let user try again with same data
+    // resetUIState(); // Reset UI so user can try again
   }
 };
 
 // Add a global function to reset UI state after spreadsheet creation
 function resetUIState() {
-  // Clear input fields
-  document.getElementById("master_brand_buildout_spreadsheet").value = "";
-  document.getElementById("account_data_spreadsheet").value = "";
+  // Don't clear input fields - keep them for repeated use
+  // document.getElementById("master_brand_buildout_spreadsheet").value = "";
+  // document.getElementById("account_data_spreadsheet").value = "";
+  
+  // Only clear the accounts form and reset button state
   document.getElementById("accounts_form").innerHTML = "";
   BUTTON_STATE = "GET_MANAGER_DATA";
   updateButtonState(BUTTON_STATE);
   ACCOUNTS = [];
-}
+  
+  // Ensure authentication is still valid
+  if (!isAuthenticated()) {
+    // Authentication lost during reset, signing out
+    signOut();
+  }
+};
