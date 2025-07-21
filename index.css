@@ -39,6 +39,12 @@ input, label {
     color: #333;
 }
 
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #104a9e;
+    border-color: #104a9e;
+    color: #fff;
+}
+
 .spinner-grow {
     color: #FADA5E;
 }

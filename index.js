@@ -97,16 +97,18 @@ function updateAuthUI(isAuthenticated) {
     buildoutButtonSpan.textContent = 'Get Manager Data';
     if (accountBuildoutButton) {
       accountBuildoutButton.disabled = false;
+      accountBuildoutButton.className = 'btn btn-primary mt-3';
     }
   } else {
     signInBtn.innerHTML = `
-      <button class="btn btn-outline-primary" onclick="signIn()">
-        Sign in with Google
+      <button class="btn btn-primary" onclick="signIn()">
+        Authorize
       </button>
     `;
-    buildoutButtonSpan.textContent = 'Sign in to continue';
+    buildoutButtonSpan.textContent = 'Get Manager Data';
     if (accountBuildoutButton) {
       accountBuildoutButton.disabled = true;
+      accountBuildoutButton.className = 'btn btn-primary mt-3';
     }
   }
 }
