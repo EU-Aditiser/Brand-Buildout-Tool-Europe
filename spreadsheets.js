@@ -148,10 +148,12 @@ async function processRequest(buildoutSpreadsheet, accountDataSpreadsheet, accou
   
   // Ask user if they want to continue with issues
   if (buildoutHasIssues || accountDataHasIssues) {
-    const continueProcessing = confirm('Data validation found issues. Do you want to continue processing anyway? (This may cause errors)');
-    if (!continueProcessing) {
-      return;
-    }
+    // const continueProcessing = confirm('Data validation found issues. Do you want to continue processing anyway? (This may cause errors)');
+    // if (!continueProcessing) {
+    //   return;
+    // }
+    // Instead, just stop processing if there are issues
+    return;
   }
 
   if (!buildoutSpreadsheet || !buildoutSpreadsheet.sheets) {
