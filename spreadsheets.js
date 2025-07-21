@@ -1561,26 +1561,10 @@ function displayValidationResults(validation, spreadsheetName) {
 function getDataIssueGuidance(validation) {
   const guidance = [];
   
-  if (validation.problematicCells.length > 0) {
-    guidance.push('🔧 FIXES NEEDED:');
-    guidance.push('1. Select all data in your source spreadsheet');
-    guidance.push('2. Copy (Cmd+C)');
-    guidance.push('3. In the target spreadsheet, use "Paste Values Only" (Cmd+Shift+V)');
-    guidance.push('4. This removes formulas and formatting that cause parsing issues');
-  }
-  
-  if (validation.errors.length > 0) {
-    guidance.push('🚨 CRITICAL ISSUES:');
-    guidance.push('- Some sheets are missing required data structure');
-    guidance.push('- Check that all sheets have proper headers and data');
-  }
-  
-  if (validation.warnings.length > 0) {
-    guidance.push('⚠️  RECOMMENDATIONS:');
-    guidance.push('- Review cells with formulas or special formatting');
-    guidance.push('- Ensure all data is in plain text format');
-    guidance.push('- Remove any conditional formatting that might interfere');
-  }
+  guidance.push('⚠️ RECOMMENDATIONS:');
+  guidance.push('1. Select all cells in your source spreadsheet');
+  guidance.push('2. Copy (Cmd+C)');
+  guidance.push('3. In the target spreadsheet, use "Paste Values Only" (Cmd+Shift+V)');
   
   return guidance.join('\n');
 }
