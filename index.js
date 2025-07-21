@@ -447,7 +447,8 @@ accountBuildoutButton.onclick = async function() {
     // Update window.accessToken to ensure it's available for API calls
     window.accessToken = token;
     
-    // Starting account buildout with authenticated token
+    // Force token synchronization for all API calls
+    console.log('Token synchronized for API calls:', token ? 'Token available' : 'No token');
     
     // Proceed with account buildout
     await handleAccountBuildoutClick();

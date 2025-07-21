@@ -671,12 +671,24 @@ async function fetchSpreadsheetNoGridData(url) {
   const spreadsheetId = getDocumentIdFromUrl(url);
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`;
   
-  // Get current access token
-  const token = window.accessToken || localStorage.getItem('accessToken');
+  // Get current access token with multiple fallbacks
+  let token = window.accessToken;
+  if (!token) {
+    token = localStorage.getItem('accessToken');
+  }
+  if (!token) {
+    // Try to get from global function if available
+    if (typeof getCurrentAccessToken === 'function') {
+      token = getCurrentAccessToken();
+    }
+  }
+  
   if (!token) {
     alert("Google access token not available. Please sign in again.");
     return null;
   }
+  
+  console.log('Using token for API call:', token ? 'Token available' : 'No token');
   
   const res = await fetch(apiUrl, {
     headers: {
@@ -707,12 +719,24 @@ async function fetchSpreadsheet(url) {
   
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=true`;
   
-  // Get current access token
-  const token = window.accessToken || localStorage.getItem('accessToken');
+  // Get current access token with multiple fallbacks
+  let token = window.accessToken;
+  if (!token) {
+    token = localStorage.getItem('accessToken');
+  }
+  if (!token) {
+    // Try to get from global function if available
+    if (typeof getCurrentAccessToken === 'function') {
+      token = getCurrentAccessToken();
+    }
+  }
+  
   if (!token) {
     alert("Google access token not available. Please sign in again.");
     return null;
   }
+  
+  console.log('Using token for API call:', token ? 'Token available' : 'No token');
   
   try {
     const res = await fetch(apiUrl, {
@@ -767,12 +791,24 @@ async function fetchSpreadsheetSingleManager(url, manager) {
   // Update range to include all columns up to AH (column 34) to cover all headlines and descriptions
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?ranges=${encodeURIComponent(manager + '!A1:AH100')}&ranges=URL%20Data!A1:D150&includeGridData=true`;
   
-  // Get current access token
-  const token = window.accessToken || localStorage.getItem('accessToken');
+  // Get current access token with multiple fallbacks
+  let token = window.accessToken;
+  if (!token) {
+    token = localStorage.getItem('accessToken');
+  }
+  if (!token) {
+    // Try to get from global function if available
+    if (typeof getCurrentAccessToken === 'function') {
+      token = getCurrentAccessToken();
+    }
+  }
+  
   if (!token) {
     alert("Google access token not available. Please sign in again.");
     return null;
   }
+  
+  console.log('Using token for API call:', token ? 'Token available' : 'No token');
   
   try {
     const res = await fetch(apiUrl, {
