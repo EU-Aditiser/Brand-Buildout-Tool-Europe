@@ -214,7 +214,11 @@ async function handleAccountBuildoutClick(e) {
       updateButtonState("")
 
       const managerFormData = readAccountBuildoutData();
+      console.log('Manager form data:', managerFormData);
+      
+      console.log('About to fetch spreadsheet with URL:', managerFormData.accountDataSpreadsheetURL);
       const managerDataSpreadsheet = await fetchSpreadsheetNoGridData(managerFormData.accountDataSpreadsheetURL)
+      console.log('Manager data spreadsheet response:', managerDataSpreadsheet);
       
       // Check if spreadsheet was fetched successfully
       if (!managerDataSpreadsheet) {
@@ -224,7 +228,9 @@ async function handleAccountBuildoutClick(e) {
         return;
       }
       
+      console.log('About to get managers from spreadsheet...');
       const managers = getManagersFromDataSpreadsheet(managerDataSpreadsheet);
+      console.log('Managers found:', managers);
       
       if (!managers || managers.length === 0) {
         alert("No managers found in the spreadsheet. Please check the data and try again.");

@@ -668,8 +668,13 @@ function getDocumentIdFromUrl (url) {
 
 // Helper to fetch Google Sheets data using access token
 async function fetchSpreadsheetNoGridData(url) {
+  console.log('fetchSpreadsheetNoGridData called with URL:', url);
+  
   const spreadsheetId = getDocumentIdFromUrl(url);
+  console.log('Extracted spreadsheet ID:', spreadsheetId);
+  
   const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`;
+  console.log('API URL:', apiUrl);
   
   // Get current access token with multiple fallbacks
   let token = window.accessToken;
@@ -684,24 +689,42 @@ async function fetchSpreadsheetNoGridData(url) {
   }
   
   if (!token) {
+    console.error('No access token available');
     alert("Google access token not available. Please sign in again.");
     return null;
   }
   
-  console.log('Using token for API call:', token ? 'Token available' : 'No token');
+  console.log('Token available for API call:', token ? 'Yes' : 'No');
+  console.log('Token length:', token ? token.length : 0);
   
-  const res = await fetch(apiUrl, {
-    headers: {
-      'Authorization': `Bearer ${token}`
+  try {
+    console.log('Making API request...');
+    const res = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    console.log('API response status:', res.status);
+    console.log('API response ok:', res.ok);
+    
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Sheets API error:', err);
+      alert('Sheets API error: ' + err);
+      return null;
     }
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    console.error('Sheets API error:', err);
-    alert('Sheets API error: ' + err);
+    
+    const result = await res.json();
+    console.log('API response result:', result);
+    console.log('Result has sheets property:', result && result.sheets ? 'Yes' : 'No');
+    
+    return result;
+  } catch (error) {
+    console.error('Error in fetchSpreadsheetNoGridData:', error);
+    alert('Error fetching spreadsheet: ' + error.message);
     return null;
   }
-  return await res.json();
 }
 
 // Helper to fetch a spreadsheet with grid data using access token
