@@ -684,7 +684,7 @@ async function fetchSpreadsheetNoGridData(url) {
   if (!token) {
     // Try to get from global function if available
     if (typeof getCurrentAccessToken === 'function') {
-      token = getCurrentAccessToken();
+      token = await getCurrentAccessToken();
     }
   }
   
@@ -750,7 +750,7 @@ async function fetchSpreadsheet(url) {
   if (!token) {
     // Try to get from global function if available
     if (typeof getCurrentAccessToken === 'function') {
-      token = getCurrentAccessToken();
+      token = await getCurrentAccessToken();
     }
   }
   
@@ -822,7 +822,7 @@ async function fetchSpreadsheetSingleManager(url, manager) {
   if (!token) {
     // Try to get from global function if available
     if (typeof getCurrentAccessToken === 'function') {
-      token = getCurrentAccessToken();
+      token = await getCurrentAccessToken();
     }
   }
   
@@ -1030,7 +1030,7 @@ async function batchUpdate(spreadsheetId, requests) {
   // Get the latest access token
   let token = null;
   if (typeof getCurrentAccessToken === 'function') {
-    token = getCurrentAccessToken();
+    token = await getCurrentAccessToken();
   } else if (window.accessToken) {
     token = window.accessToken;
   } else if (localStorage.getItem('googleAccessToken')) {
@@ -1199,7 +1199,7 @@ async function createNewDocument(spreadsheet) {
   // --- TOKEN HANDLING ---
   let token = null;
   if (typeof getCurrentAccessToken === 'function') {
-    token = getCurrentAccessToken();
+    token = await getCurrentAccessToken();
   } else if (window.accessToken) {
     token = window.accessToken;
   } else if (localStorage.getItem('googleAccessToken')) {

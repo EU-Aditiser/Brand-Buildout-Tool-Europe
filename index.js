@@ -199,9 +199,57 @@ function isAuthenticated() {
   return accessToken !== null;
 }
 
-// Get current access token
-function getCurrentAccessToken() {
+// Get current access token, refresh if expired
+async function getCurrentAccessToken() {
+  if (!accessToken || isTokenExpired()) {
+    // Try to refresh the token
+    ensureTokenClient();
+    if (tokenClient) {
+      console.log('Access token expired or missing, requesting new token...');
+      // Wrap in a promise to wait for callback
+      await new Promise((resolve, reject) => {
+        tokenClient.callback = (response) => {
+          if (response && response.access_token) {
+            accessToken = response.access_token;
+            const expiry = Date.now() + (response.expires_in * 1000);
+            localStorage.setItem('googleAccessToken', accessToken);
+            localStorage.setItem('googleTokenExpiry', expiry.toString());
+            updateAuthUI(true);
+            resolve();
+          } else {
+            alert('Session expired. Please sign in again.');
+            signOut();
+            reject('No access token received');
+          }
+        };
+        tokenClient.requestAccessToken();
+      });
+    } else {
+      alert('Session expired. Please sign in again.');
+      signOut();
+      return null;
+    }
+  }
   return accessToken;
+}
+
+function isTokenExpired() {
+  const expiry = localStorage.getItem('googleTokenExpiry');
+  if (!expiry) return true;
+  return Date.now() > parseInt(expiry);
+}
+
+// GIS token client for refresh
+let tokenClient = null;
+
+function ensureTokenClient() {
+  if (!tokenClient && typeof google !== 'undefined' && google.accounts) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: handleTokenResponse
+    });
+  }
 }
 
 // Set up event listeners
