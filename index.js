@@ -463,8 +463,16 @@ function readManagerSelectData() {
 }
 
 function readAccountCheckBoxData() {
-  const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-  return Array.from(checkboxes).map(cb => cb.value || cb.id.replace('-checkbox', ''));
+  let selectedAccounts = [];
+  for(let i = 0; i < ACCOUNTS.length; i++) {
+    const account = ACCOUNTS[i].accountTitle || ACCOUNTS[i];
+    const checkboxId = account.split(" ").join("") + "-checkbox";
+    const checkbox = document.getElementById(checkboxId);
+    if(checkbox && checkbox.checked) {
+      selectedAccounts.push(account); // Use original account name with spaces
+    }
+  }
+  return selectedAccounts;
 }
 
 // Load patch notes
