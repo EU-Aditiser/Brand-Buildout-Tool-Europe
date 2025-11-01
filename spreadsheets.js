@@ -1138,18 +1138,56 @@ function createRowData(values){
   return rowData;
 }
 
-function handleFieldLengthLimits(rowData) {
-  //10 and 13
-  const headline1 = rowData.values[10].userEnteredValue.stringValue;
-  if(headline1.length > 40) {
-    markCellRed(rowData.values[10])
-  }
-
-  const path1 = rowData.values[14].userEnteredValue.stringValue;
-  if(path1.length > 15) {
-    markCellRed(rowData.values[14])
+// Count characters for headline validation based on special rules
+function countHeadlineCharacters(text) {
+  if (!text || typeof text !== 'string') return 0;
+  
+  // If starts with {KeyWord: - count only after the colon
+  if (text.startsWith('{KeyWord:')) {
+    const colonIndex = text.indexOf(':');
+    if (colonIndex >= 0) {
+      return text.substring(colonIndex + 1).length;
+    }
   }
   
+  // If starts with {CUSTOMIZER.Dynamic Headline - count only after the colon
+  if (text.startsWith('{CUSTOMIZER.Dynamic Headline')) {
+    const colonIndex = text.indexOf(':');
+    if (colonIndex >= 0) {
+      return text.substring(colonIndex + 1).length;
+    }
+  }
+  
+  // For all other text values, count the entire cell text
+  return text.length;
+}
+
+function handleFieldLengthLimits(rowData) {
+  // Headline columns indices: H1 at 10, H2 at 12, H3 at 13, H4-H15 at 15-26
+  const headlineIndices = [10, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
+  
+  for (const index of headlineIndices) {
+    if (rowData.values[index] && 
+        rowData.values[index].userEnteredValue && 
+        rowData.values[index].userEnteredValue.stringValue) {
+      const headlineText = rowData.values[index].userEnteredValue.stringValue;
+      const charCount = countHeadlineCharacters(headlineText);
+      
+      if (charCount > 30) {
+        markCellRed(rowData.values[index]);
+      }
+    }
+  }
+
+  // Path validation (unchanged - 15 character limit)
+  if (rowData.values[14] && 
+      rowData.values[14].userEnteredValue && 
+      rowData.values[14].userEnteredValue.stringValue) {
+    const path1 = rowData.values[14].userEnteredValue.stringValue;
+    if (path1.length > 15) {
+      markCellRed(rowData.values[14]);
+    }
+  }
 }
 
 //objects are passed by reference
