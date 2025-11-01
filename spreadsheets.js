@@ -484,25 +484,24 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
           const descriptionLine1 = !isCellEmpty(adCopyRowData[adIndex].values[7]) ? adCopyRowData[adIndex].values[7].userEnteredValue.stringValue : "";
           const descriptionLine2 = !isCellEmpty(adCopyRowData[adIndex].values[8]) ? adCopyRowData[adIndex].values[8].userEnteredValue.stringValue : "";
         
-          const headline1 = !isCellEmpty(adCopyRowData[adIndex].values[9]) ? createHeadline1(brandTitle, adCopyRowData[adIndex].values[9].userEnteredValue.stringValue) : "";
-          const headline1Position = !isCellEmpty(adCopyRowData[adIndex].values[10])
-            ? (adCopyRowData[adIndex].values[10].userEnteredValue.stringValue ?? adCopyRowData[adIndex].values[10].userEnteredValue.numberValue ?? "")
-            : "";
+          // Headline columns in the adCopySheet row (0-based):
+          // H1 at index 9, H1 position at 10, H2..H3 at 11..12, H4..H15 at 13..24
+          const headline1 = transformHeadlineCell(brandTitle, adCopyRowData[adIndex].values[9]);
+          const headline1PositionValue = !isCellEmpty(adCopyRowData[adIndex].values[10])
+            ? (adCopyRowData[adIndex].values[10].userEnteredValue.stringValue
+               ?? adCopyRowData[adIndex].values[10].userEnteredValue.numberValue
+               ?? '')
+            : '';
         
-          const headline2 = !isCellEmpty(adCopyRowData[adIndex].values[11]) ? adCopyRowData[adIndex].values[11].userEnteredValue.stringValue : "";
-          const headline3 = !isCellEmpty(adCopyRowData[adIndex].values[12]) ? adCopyRowData[adIndex].values[12].userEnteredValue.stringValue : "";
-          const headline4 = !isCellEmpty(adCopyRowData[adIndex].values[13]) ? adCopyRowData[adIndex].values[13].userEnteredValue.stringValue : "";
-          const headline5 = !isCellEmpty(adCopyRowData[adIndex].values[14]) ? adCopyRowData[adIndex].values[14].userEnteredValue.stringValue : "";
-          const headline6 = !isCellEmpty(adCopyRowData[adIndex].values[15]) ? adCopyRowData[adIndex].values[15].userEnteredValue.stringValue : "";
-          const headline7 = !isCellEmpty(adCopyRowData[adIndex].values[16]) ? adCopyRowData[adIndex].values[16].userEnteredValue.stringValue : "";
-          const headline8 = !isCellEmpty(adCopyRowData[adIndex].values[17]) ? adCopyRowData[adIndex].values[17].userEnteredValue.stringValue : "";
-          const headline9 = !isCellEmpty(adCopyRowData[adIndex].values[18]) ? adCopyRowData[adIndex].values[18].userEnteredValue.stringValue : "";
-          const headline10 = !isCellEmpty(adCopyRowData[adIndex].values[19]) ? adCopyRowData[adIndex].values[19].userEnteredValue.stringValue : "";
-          const headline11 = !isCellEmpty(adCopyRowData[adIndex].values[20]) ? adCopyRowData[adIndex].values[20].userEnteredValue.stringValue : "";
-          const headline12 = !isCellEmpty(adCopyRowData[adIndex].values[21]) ? adCopyRowData[adIndex].values[21].userEnteredValue.stringValue : "";
-          const headline13 = !isCellEmpty(adCopyRowData[adIndex].values[22]) ? adCopyRowData[adIndex].values[22].userEnteredValue.stringValue : "";
-          const headline14 = !isCellEmpty(adCopyRowData[adIndex].values[23]) ? adCopyRowData[adIndex].values[23].userEnteredValue.stringValue : "";
-          const headline15 = !isCellEmpty(adCopyRowData[adIndex].values[24]) ? adCopyRowData[adIndex].values[24].userEnteredValue.stringValue : "";
+          // Build Headline 2..15 using the same rule
+          const headlinesRest = [];
+          for (let srcCol = 11; srcCol <= 24; srcCol++) {
+            headlinesRest.push(transformHeadlineCell(brandTitle, adCopyRowData[adIndex].values[srcCol]));
+          }
+        
+          // Unpack for readability
+          const [headline2, headline3, headline4, headline5, headline6, headline7, headline8, headline9,
+                 headline10, headline11, headline12, headline13, headline14, headline15] = headlinesRest;
         
           const description1 = !isCellEmpty(adCopyRowData[adIndex].values[25]) ? adCopyRowData[adIndex].values[25].userEnteredValue.stringValue : "";
           const description1Position = !isCellEmpty(adCopyRowData[adIndex].values[26])
@@ -523,7 +522,7 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
             descriptionLine1,
             descriptionLine2,
             headline1,
-            headline1Position,
+            headline1PositionValue,
             headline2,
             headline3,
             path,
@@ -579,11 +578,12 @@ async function createAccountBuildoutSpreadsheet(keywordSpreadsheet, adCopySheet,
   return masterSpreadsheet;
 }
 
-function createHeadline1(brandTitle, headline1) {
-  const index = headline1.indexOf('Brand');
-  const newString = headline1.substr(0, index) + brandTitle + headline1.substr(index + 5);
-  return newString;
-}
+// DEPRECATED: Use transformHeadlineCell instead
+// function createHeadline1(brandTitle, headline1) {
+//   const index = headline1.indexOf('Brand');
+//   const newString = headline1.substr(0, index) + brandTitle + headline1.substr(index + 5);
+//   return newString;
+// }
 
 function createPath(brandTitle) {
   let path = "";
@@ -611,6 +611,28 @@ function createPath(brandTitle) {
 
 function isCellEmpty(cell) {
   return typeof cell === "undefined" || cell === null || !cell.hasOwnProperty('userEnteredValue')
+}
+
+// Exact token we support
+const KEYWORD_BRAND_TOKEN = '{KeyWord:Brand at iHerb}';
+
+// Returns the plain string value from a cell ('' if empty)
+function readCellString(cell) {
+  if (isCellEmpty(cell)) return '';
+  const v = cell.userEnteredValue;
+  // prefer string, fall back to number coerced to string
+  return typeof v.stringValue === 'string'
+    ? v.stringValue
+    : (typeof v.numberValue === 'number' ? String(v.numberValue) : '');
+}
+
+// Replace only when the cell equals the exact token. Otherwise pass through unchanged.
+function transformHeadlineCell(brandTitle, cell) {
+  const s = readCellString(cell).trim();
+  if (s === KEYWORD_BRAND_TOKEN) {
+    return `{KeyWord:${brandTitle} at iHerb}`;
+  }
+  return s; // unchanged
 }
 
 /**potentially hazasrdous */
