@@ -1138,28 +1138,27 @@ function createRowData(values){
   return rowData;
 }
 
-// Count characters for headline validation based on special rules
-function countHeadlineCharacters(text) {
-  if (!text || typeof text !== 'string') return 0;
+// Count characters after colon for {KeyWord:...} format only
+// Returns character count, or -1 if not a {KeyWord: format
+function countKeyWordHeadlineCharacters(text) {
+  if (!text || typeof text !== 'string') return -1;
   
-  // If starts with {KeyWord: - count only after the colon
+  // Only process if starts with {KeyWord:
   if (text.startsWith('{KeyWord:')) {
     const colonIndex = text.indexOf(':');
     if (colonIndex >= 0) {
-      return text.substring(colonIndex + 1).length;
+      // Count only characters after the colon, ignoring closing brace }
+      let afterColon = text.substring(colonIndex + 1);
+      // Remove closing brace if present
+      if (afterColon.endsWith('}')) {
+        afterColon = afterColon.slice(0, -1);
+      }
+      return afterColon.length;
     }
   }
   
-  // If starts with {CUSTOMIZER.Dynamic Headline - count only after the colon
-  if (text.startsWith('{CUSTOMIZER.Dynamic Headline')) {
-    const colonIndex = text.indexOf(':');
-    if (colonIndex >= 0) {
-      return text.substring(colonIndex + 1).length;
-    }
-  }
-  
-  // For all other text values, count the entire cell text
-  return text.length;
+  // Return -1 to indicate this is not a {KeyWord: format (should be skipped)
+  return -1;
 }
 
 function handleFieldLengthLimits(rowData) {
@@ -1171,11 +1170,17 @@ function handleFieldLengthLimits(rowData) {
         rowData.values[index].userEnteredValue && 
         rowData.values[index].userEnteredValue.stringValue) {
       const headlineText = rowData.values[index].userEnteredValue.stringValue;
-      const charCount = countHeadlineCharacters(headlineText);
       
-      if (charCount > 30) {
-        markCellRed(rowData.values[index]);
+      // Only check headlines that start with {KeyWord:
+      if (headlineText.startsWith('{KeyWord:')) {
+        const charCount = countKeyWordHeadlineCharacters(headlineText);
+        
+        // If count exceeds 30, mark the cell red
+        if (charCount > 30) {
+          markCellRed(rowData.values[index]);
+        }
       }
+      // Skip all other headlines (CUSTOMIZER, plain text, etc.)
     }
   }
 
