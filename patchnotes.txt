@@ -1,3 +1,15 @@
+November 2025 Patch Notes
+
+- Updated headline processing to support both {KeyWord:Brand at iHerb} and {CUSTOMIZER.Dynamic Headline X:...} patterns.
+
+- Implemented exact token replacement: {KeyWord:Brand at iHerb} is now replaced with {KeyWord:<brandName> at iHerb} in all Headline columns (1-15).
+
+- CUSTOMIZER patterns and other headline values are now passed through unchanged.
+
+- Character count for {KeyWord:...} headlines counts only the text after the colon (ignoring the closing brace).
+
+- Headlines with CUSTOMIZER patterns and plain text are now skipped from character validation.
+
 Jun 2025 Patch Notes
 
 - The spreadsheet header row now supports reading and writing Headline 1–15.
