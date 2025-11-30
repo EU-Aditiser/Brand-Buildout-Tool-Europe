@@ -1552,10 +1552,15 @@ function validateSpreadsheetData(spreadsheet, spreadsheetName) {
           }
         }
         
-        // Check for cells with special formatting that might cause issues
-        if (cell && cell.userEnteredFormat && cell.userEnteredFormat.numberFormat) {
-          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Has number formatting - may cause parsing issues`);
-          problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+        // Check for cells stored as numbers when they should be strings (this causes parsing issues)
+        // Only warn if the value is actually stored as a number, not just if it has number formatting
+        if (cell && cell.userEnteredValue) {
+          const value = cell.userEnteredValue;
+          // If value is stored as number but not as string, this will cause issues when code accesses .stringValue
+          if (value.numberValue !== undefined && value.stringValue === undefined) {
+            warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Value stored as number (${value.numberValue}) - should be text. Use Paste Values Only and ensure cell is formatted as text.`);
+            problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+          }
         }
       }
     }
