@@ -1537,30 +1537,42 @@ function validateSpreadsheetData(spreadsheet, spreadsheetName) {
       for (let colIndex = 0; colIndex < row.values.length; colIndex++) {
         const cell = row.values[colIndex];
         
+        // Skip empty cells - no need to validate them
+        if (isCellEmpty(cell)) {
+          continue;
+        }
+        
+        // Skip if cell has no actual value (empty userEnteredValue object)
+        if (!cell.userEnteredValue) {
+          continue;
+        }
+        
+        const value = cell.userEnteredValue;
+        // Check if cell has any actual value (not empty)
+        const hasValue = value.stringValue !== undefined || value.numberValue !== undefined || value.formulaValue !== undefined;
+        
+        // Skip validation if cell is effectively empty
+        if (!hasValue) {
+          continue;
+        }
+        
         // Check for formula cells
-        if (cell && cell.userEnteredValue && cell.userEnteredValue.formulaValue) {
-          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Contains formula "${cell.userEnteredValue.formulaValue}" - should use Paste Values Only`);
+        if (value.formulaValue) {
+          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Contains formula "${value.formulaValue}" - should use Paste Values Only`);
           problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
         }
         
-        // Check for cells with unexpected data types
-        if (cell && cell.userEnteredValue) {
-          const value = cell.userEnteredValue;
-          if (value.numberValue !== undefined && value.stringValue !== undefined) {
-            warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Mixed data types detected`);
-            problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
-          }
+        // Check for cells with unexpected data types (both number and string)
+        if (value.numberValue !== undefined && value.stringValue !== undefined) {
+          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Mixed data types detected`);
+          problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
         }
         
         // Check for cells stored as numbers when they should be strings (this causes parsing issues)
         // Only warn if the value is actually stored as a number, not just if it has number formatting
-        if (cell && cell.userEnteredValue) {
-          const value = cell.userEnteredValue;
-          // If value is stored as number but not as string, this will cause issues when code accesses .stringValue
-          if (value.numberValue !== undefined && value.stringValue === undefined) {
-            warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Value stored as number (${value.numberValue}) - should be text. Use Paste Values Only and ensure cell is formatted as text.`);
-            problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
-          }
+        if (value.numberValue !== undefined && value.stringValue === undefined) {
+          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Value stored as number (${value.numberValue}) - should be text. Use Paste Values Only and ensure cell is formatted as text.`);
+          problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
         }
       }
     }
