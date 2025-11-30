@@ -630,18 +630,30 @@ function isCellTrulyEmpty(cell) {
     return true;
   }
   
-  // Check if cell has any actual meaningful value
+  // Only check for actual value properties (not formatting or other metadata)
+  // These are the only properties that indicate a cell has actual content:
+  // - stringValue: text content
+  // - numberValue: numeric content  
+  // - formulaValue: formula content
+  // - boolValue: boolean content
+  // - errorValue: error content (we'll treat this as non-empty since it's a value)
+  
   // stringValue must be a non-empty string
-  const hasStringValue = typeof value.stringValue === 'string' && value.stringValue !== '';
-  // numberValue must be a valid number (including 0)
-  const hasNumberValue = typeof value.numberValue === 'number';
-  // formulaValue must exist
-  const hasFormulaValue = value.formulaValue !== undefined && value.formulaValue !== null && value.formulaValue !== '';
+  const hasStringValue = typeof value.stringValue === 'string' && value.stringValue.trim() !== '';
+  // numberValue must be a valid number (including 0, but not NaN)
+  const hasNumberValue = typeof value.numberValue === 'number' && !isNaN(value.numberValue);
+  // formulaValue must exist and be non-empty
+  const hasFormulaValue = typeof value.formulaValue === 'string' && value.formulaValue.trim() !== '';
   // boolValue must be a boolean
   const hasBoolValue = typeof value.boolValue === 'boolean';
+  // errorValue indicates an error (treat as non-empty)
+  const hasErrorValue = value.errorValue !== undefined;
   
   // Cell is empty if it has no meaningful value
-  return !hasStringValue && !hasNumberValue && !hasFormulaValue && !hasBoolValue;
+  // If the object only has properties other than the value properties above, it's empty
+  const hasAnyValue = hasStringValue || hasNumberValue || hasFormulaValue || hasBoolValue || hasErrorValue;
+  
+  return !hasAnyValue;
 }
 
 // Exact token we support
@@ -1573,7 +1585,24 @@ function validateSpreadsheetData(spreadsheet, spreadsheetName) {
           continue;
         }
         
+        // Additional safety check: ensure cell has userEnteredValue
+        if (!cell || !cell.userEnteredValue) {
+          continue;
+        }
+        
         const value = cell.userEnteredValue;
+        
+        // Double-check that value actually has content (defensive programming)
+        const hasActualValue = (typeof value.stringValue === 'string' && value.stringValue.trim() !== '') ||
+                               (typeof value.numberValue === 'number' && !isNaN(value.numberValue)) ||
+                               (typeof value.formulaValue === 'string' && value.formulaValue.trim() !== '') ||
+                               (typeof value.boolValue === 'boolean') ||
+                               (value.errorValue !== undefined);
+        
+        // Skip if cell doesn't actually have a value (only has formatting or metadata)
+        if (!hasActualValue) {
+          continue;
+        }
         
         // Check for formula cells
         if (value.formulaValue) {
