@@ -613,6 +613,37 @@ function isCellEmpty(cell) {
   return typeof cell === "undefined" || cell === null || !cell.hasOwnProperty('userEnteredValue')
 }
 
+// More thorough check for truly empty cells (including empty strings, empty objects, etc.)
+function isCellTrulyEmpty(cell) {
+  if (isCellEmpty(cell)) {
+    return true;
+  }
+  
+  if (!cell.userEnteredValue) {
+    return true;
+  }
+  
+  const value = cell.userEnteredValue;
+  
+  // Check if userEnteredValue is an empty object (no properties)
+  if (Object.keys(value).length === 0) {
+    return true;
+  }
+  
+  // Check if cell has any actual meaningful value
+  // stringValue must be a non-empty string
+  const hasStringValue = typeof value.stringValue === 'string' && value.stringValue !== '';
+  // numberValue must be a valid number (including 0)
+  const hasNumberValue = typeof value.numberValue === 'number';
+  // formulaValue must exist
+  const hasFormulaValue = value.formulaValue !== undefined && value.formulaValue !== null && value.formulaValue !== '';
+  // boolValue must be a boolean
+  const hasBoolValue = typeof value.boolValue === 'boolean';
+  
+  // Cell is empty if it has no meaningful value
+  return !hasStringValue && !hasNumberValue && !hasFormulaValue && !hasBoolValue;
+}
+
 // Exact token we support
 const KEYWORD_BRAND_TOKEN = '{KeyWord:Brand at iHerb}';
 
@@ -1537,24 +1568,12 @@ function validateSpreadsheetData(spreadsheet, spreadsheetName) {
       for (let colIndex = 0; colIndex < row.values.length; colIndex++) {
         const cell = row.values[colIndex];
         
-        // Skip empty cells - no need to validate them
-        if (isCellEmpty(cell)) {
-          continue;
-        }
-        
-        // Skip if cell has no actual value (empty userEnteredValue object)
-        if (!cell.userEnteredValue) {
+        // Skip truly empty cells - no need to validate them
+        if (isCellTrulyEmpty(cell)) {
           continue;
         }
         
         const value = cell.userEnteredValue;
-        // Check if cell has any actual value (not empty)
-        const hasValue = value.stringValue !== undefined || value.numberValue !== undefined || value.formulaValue !== undefined;
-        
-        // Skip validation if cell is effectively empty
-        if (!hasValue) {
-          continue;
-        }
         
         // Check for formula cells
         if (value.formulaValue) {
