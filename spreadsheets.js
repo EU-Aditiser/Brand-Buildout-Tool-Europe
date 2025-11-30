@@ -640,8 +640,8 @@ function isCellTrulyEmpty(cell) {
   
   // stringValue must be a non-empty string
   const hasStringValue = typeof value.stringValue === 'string' && value.stringValue.trim() !== '';
-  // numberValue must be a valid number (including 0, but not NaN)
-  const hasNumberValue = typeof value.numberValue === 'number' && !isNaN(value.numberValue);
+  // numberValue must be a valid number (excluding 0, as it's often used as placeholder for empty)
+  const hasNumberValue = typeof value.numberValue === 'number' && !isNaN(value.numberValue) && value.numberValue !== 0;
   // formulaValue must exist and be non-empty
   const hasFormulaValue = typeof value.formulaValue === 'string' && value.formulaValue.trim() !== '';
   // boolValue must be a boolean
@@ -651,6 +651,7 @@ function isCellTrulyEmpty(cell) {
   
   // Cell is empty if it has no meaningful value
   // If the object only has properties other than the value properties above, it's empty
+  // Also treat 0 as empty since it's often used as a placeholder
   const hasAnyValue = hasStringValue || hasNumberValue || hasFormulaValue || hasBoolValue || hasErrorValue;
   
   return !hasAnyValue;
@@ -1568,6 +1569,26 @@ function validateSpreadsheetData(spreadsheet, spreadsheetName) {
 
     const rowData = sheet.data[0].rowData;
     
+    // Get header row to determine column types (row 0 is typically the header)
+    let headerRow = null;
+    if (rowData.length > 0 && rowData[0] && rowData[0].values) {
+      headerRow = rowData[0];
+    }
+    
+    // Helper function to check if a column is a position column (allows numbers)
+    function isPositionColumn(colIndex) {
+      if (!headerRow || !headerRow.values || colIndex >= headerRow.values.length) {
+        return false;
+      }
+      const headerCell = headerRow.values[colIndex];
+      if (!headerCell || !headerCell.userEnteredValue || !headerCell.userEnteredValue.stringValue) {
+        return false;
+      }
+      const headerText = headerCell.userEnteredValue.stringValue.toLowerCase();
+      return headerText.includes('position') || headerText.includes('headline') && headerText.includes('position') || 
+             headerText.includes('description') && headerText.includes('position');
+    }
+    
     for (let rowIndex = 0; rowIndex < rowData.length; rowIndex++) {
       const row = rowData[rowIndex];
       
@@ -1618,9 +1639,14 @@ function validateSpreadsheetData(spreadsheet, spreadsheetName) {
         
         // Check for cells stored as numbers when they should be strings (this causes parsing issues)
         // Only warn if the value is actually stored as a number, not just if it has number formatting
-        if (value.numberValue !== undefined && value.stringValue === undefined) {
-          warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Value stored as number (${value.numberValue}) - should be text. Use Paste Values Only and ensure cell is formatted as text.`);
-          problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+        // Skip if number is 0, as it might be used as a placeholder for empty
+        // Skip if this is a position column (numbers are valid in position columns)
+        if (value.numberValue !== undefined && value.stringValue === undefined && value.numberValue !== 0) {
+          // Allow numbers in position columns (like "Headline 1 position", "Description 1 position")
+          if (!isPositionColumn(colIndex)) {
+            warnings.push(`${spreadsheetName} - ${sheetName} ${indexToA1(rowIndex, colIndex)}: Value stored as number (${value.numberValue}) - should be text. Use Paste Values Only and ensure cell is formatted as text.`);
+            problematicCells.push(`${sheetName}!${indexToA1(rowIndex, colIndex)}`);
+          }
         }
       }
     }
